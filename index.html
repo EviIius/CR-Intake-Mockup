@@ -1,0 +1,1808 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CR Intake Mockup</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: a red bar with a gold rule switches four views; the request view is a step rail beside one form panel,
+   the team views are summary first, then tables that scroll inside their own frame.
+   Yellow marks what the requestor told us, blue marks what the data team added, as in the team's workbook. */
+:root {
+  --bg: #F5F3F1;
+  --surface: #FFFFFF;
+  --surface-2: #EBE7E3;
+  --ink: #221E1C;
+  --muted: #655D58;
+  --line: #DBD5CF;
+  --line-strong: #B8AFA8;
+  --accent: #C5161F;
+  --accent-fill: #D71E28;
+  --accent-ink: #FFFFFF;
+  --head: #D71E28;
+  --head-ink: #FFFFFF;
+  --gold: #FFCD41;
+  --gold-ink: #221E1C;
+  --sel: #FFF3CC;
+  --sel-line: #B98A00;
+  --req: #FFE9A6;
+  --req-ink: #6A4900;
+  --team: #D7E5F6;
+  --team-ink: #1D4B77;
+  --good: #1B7A4B;
+  --good-soft: #DFF3E8;
+  --warn: #99480A;
+  --warn-soft: #FCE6D3;
+  --crit: #A8131B;
+  --crit-soft: #FBE3E4;
+  --bar: #5A514C;
+  --font-display: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151211; --surface: #201C1A; --surface-2: #2C2724; --ink: #F2EDE9; --muted: #B3A9A2;
+    --line: #3A3330; --line-strong: #564D48; --accent: #FF8086; --accent-fill: #D71E28; --accent-ink: #FFFFFF;
+    --head: #B3161E; --head-ink: #FFFFFF; --gold: #FFCD41; --gold-ink: #221E1C; --sel: #3B2F0E; --sel-line: #D6A419;
+    --req: #45370F; --req-ink: #FFD970; --team: #1B3148; --team-ink: #B9D4F1;
+    --good: #62C794; --good-soft: #143524; --warn: #F2A96C; --warn-soft: #41270F;
+    --crit: #FF9497; --crit-soft: #4A1719; --bar: #CFC5BE;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151211; --surface: #201C1A; --surface-2: #2C2724; --ink: #F2EDE9; --muted: #B3A9A2;
+  --line: #3A3330; --line-strong: #564D48; --accent: #FF8086; --accent-fill: #D71E28; --accent-ink: #FFFFFF;
+  --head: #B3161E; --head-ink: #FFFFFF; --gold: #FFCD41; --gold-ink: #221E1C; --sel: #3B2F0E; --sel-line: #D6A419;
+  --req: #45370F; --req-ink: #FFD970; --team: #1B3148; --team-ink: #B9D4F1;
+  --good: #62C794; --good-soft: #143524; --warn: #F2A96C; --warn-soft: #41270F;
+  --crit: #FF9497; --crit-soft: #4A1719; --bar: #CFC5BE;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, p, ol, ul, fieldset, legend { margin: 0; padding: 0; }
+fieldset { border: 0; min-width: 0; }
+ol, ul { list-style: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.bar :focus-visible { outline-color: var(--gold); }
+
+/* ---------- top bar ---------- */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: var(--head); color: var(--head-ink);
+}
+.bar-in {
+  max-width: 1180px; margin: 0 auto; padding: 10px 20px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px;
+}
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-mark { display: grid; grid-template-columns: 9px 9px; gap: 2px; }
+.brand-mark i { width: 9px; height: 9px; border-radius: 2px; background: var(--head-ink); }
+.brand-mark i:nth-child(2), .brand-mark i:nth-child(3) { background: var(--gold); }
+.brand-name { font: 600 16px/1.2 var(--font-display); }
+.brand-sub { font-size: 12px; opacity: .9; }
+.bar-right { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.role-sw { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.role:disabled { opacity: .5; cursor: default; }
+.userbox { position: relative; }
+.avatar { display: inline-grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--gold); color: var(--gold-ink); font: 600 12px var(--font-body); letter-spacing: .02em; }
+.avatar-lg { width: 44px; height: 44px; font-size: 15px; }
+.user-chip { display: flex; align-items: center; gap: 8px; padding: 3px 10px 3px 4px; border-radius: 999px; cursor: pointer; text-align: left;
+  border: 1px solid color-mix(in srgb, var(--head-ink) 60%, transparent); background: color-mix(in srgb, var(--head-ink) 12%, transparent); color: var(--head-ink); }
+.user-chip:hover { background: color-mix(in srgb, var(--head-ink) 22%, transparent); }
+.user-id { display: flex; flex-direction: column; line-height: 1.15; }
+.user-id b { font-weight: 600; font-size: 13px; }
+.user-id small { font-size: 11px; opacity: .9; }
+.caret { font-size: 11px; }
+.user-out { font-size: 13px; opacity: .9; }
+.user-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: min(320px, calc(100vw - 32px)); padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 10px 30px color-mix(in srgb, var(--ink) 22%, transparent); }
+.user-menu :focus-visible { outline-color: var(--ink); }
+.user-head { display: flex; align-items: center; gap: 12px; }
+.user-head > div { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.user-facts { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; font-size: 14px; }
+.user-facts dt { color: var(--muted); }
+.user-facts dd { margin: 0; }
+.user-list { display: flex; flex-direction: column; gap: 4px; }
+.user-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; border: 1px solid transparent; border-radius: var(--r); background: none; cursor: pointer; text-align: left; }
+.user-opt:hover { background: var(--surface-2); }
+.user-opt[aria-pressed="true"] { background: var(--sel); border-color: var(--sel-line); }
+.user-opt span:last-child { display: flex; flex-direction: column; line-height: 1.2; }
+.user-opt b { font-weight: 600; font-size: 14px; }
+.user-opt small { font-size: 12px; color: var(--muted); }
+.whoami { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r); background: var(--bg); }
+.whoami-text { display: flex; flex-direction: column; flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.signin { align-items: center; text-align: center; max-width: 520px; margin: 40px auto; }
+.signin h1 { font: 600 24px/1.2 var(--font-display); }
+.role-lab { font-size: 12px; opacity: .9; margin-right: 2px; }
+.role {
+  border: 1px solid color-mix(in srgb, var(--head-ink) 60%, transparent); background: none; color: var(--head-ink);
+  padding: 6px 14px; border-radius: 999px; cursor: pointer; font-weight: 500; font-size: 14px;
+}
+.role:hover { background: color-mix(in srgb, var(--head-ink) 18%, transparent); }
+.role[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.tabbar { border-top: 4px solid var(--gold); background: var(--req); color: var(--req-ink); border-bottom: 1px solid var(--line); }
+.tabbar[data-role="team"] { background: var(--team); color: var(--team-ink); }
+.tabbar :focus-visible { outline-color: var(--ink); }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; max-width: 1180px; margin: 0 auto; padding: 6px 20px; }
+.tab {
+  border: 1px solid transparent; background: none; padding: 5px 12px; border-radius: var(--r);
+  cursor: pointer; font-weight: 500; font-size: 14px; color: inherit;
+}
+.tab:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+.tab .count { font: 500 12px var(--font-mono); margin-left: 6px; }
+
+/* ---------- page frame ---------- */
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 64px; display: flex; flex-direction: column; gap: 20px; }
+.view-head { display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+.view-head h1 { font: 600 26px/1.2 var(--font-display); text-wrap: balance; }
+.view-head p { color: var(--muted); }
+.eyebrow { font: 500 11px/1.4 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h2 { font: 600 19px/1.25 var(--font-display); text-wrap: balance; }
+h3 { font: 600 15px/1.3 var(--font-body); }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--r);
+  border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; font-weight: 500; font-size: 14px;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--accent-ink); }
+.btn-primary:hover { color: var(--accent-ink); filter: brightness(1.08); }
+.btn-quiet { border-color: transparent; background: none; color: var(--accent); padding-inline: 8px; }
+.btn-quiet:hover { background: var(--sel); border-color: transparent; }
+.btn-danger:hover { border-color: var(--crit); color: var(--crit); background: none; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* ---------- survey ---------- */
+.survey { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 24px; align-items: start; }
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 124px); display: flex; flex-direction: column; gap: 16px; }
+.steps { display: flex; flex-direction: column; gap: 2px; counter-reset: step; }
+.step {
+  counter-increment: step; display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: center;
+  width: 100%; text-align: left; border: 0; background: none; padding: 8px; border-radius: var(--r); cursor: pointer; color: var(--muted);
+}
+.step::before {
+  content: counter(step); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--line-strong); font: 500 12px var(--font-mono); color: var(--muted); background: var(--surface);
+}
+.step:hover { background: var(--surface-2); }
+.step[aria-current="step"] { color: var(--ink); font-weight: 600; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.step[aria-current="step"]::before { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--accent-ink); }
+.step.done::before { content: "\2713"; background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.step small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.rail-note { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.panel-head { display: flex; flex-direction: column; gap: 4px; max-width: 68ch; }
+.panel-head p { color: var(--muted); }
+.panel-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 18px; }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 14px; border-radius: var(--r); background: var(--sel); color: var(--ink); font-size: 14px; }
+.banner strong { font-weight: 600; }
+.note { padding: 10px 14px; border-radius: var(--r); background: var(--surface-2); color: var(--ink); font-size: 14px; }
+.note-team { background: var(--team); color: var(--team-ink); }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+.f { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.f-wide { grid-column: 1 / -1; }
+.f > label, .f > legend { font-weight: 500; font-size: 14px; }
+.opt { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 4px; }
+.hint { font-size: 13px; color: var(--muted); }
+.f input[type="text"], .f input[type="email"], .f input[type="date"], .f select, .f textarea, .cell-in {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); min-width: 0;
+}
+.f textarea { resize: vertical; min-height: 64px; }
+.f input:hover, .f select:hover, .f textarea:hover { border-color: var(--muted); }
+.f-bad input, .f-bad select, .f-bad textarea, .f-bad .choices { border-color: var(--crit); }
+.f-bad .choices { box-shadow: inset 3px 0 0 var(--crit); padding-left: 10px; }
+.err { font-size: 13px; color: var(--crit); font-weight: 500; }
+.choices { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.choices.stack { flex-direction: column; }
+.choice { display: inline-flex; align-items: flex-start; gap: 7px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r); cursor: pointer; font-size: 14px; background: var(--surface); }
+.choice:hover { border-color: var(--muted); }
+.choice input { margin: 3px 0 0; accent-color: var(--accent-fill); }
+.choice:has(input:checked) { background: var(--sel); border-color: var(--sel-line); }
+
+/* source and element blocks */
+.block { border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; }
+.block-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 12px 16px; background: var(--surface-2); border-radius: 8px 8px 0 0; }
+.block-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0; }
+.block-title .n { font: 500 12px var(--font-mono); color: var(--muted); }
+.block-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.sub { border-top: 1px dashed var(--line-strong); padding-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+.el { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--line); border-radius: var(--r); }
+.el-n { font: 500 12px var(--font-mono); color: var(--muted); padding-top: 28px; }
+.el-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
+.keyset { background: var(--bg); border-radius: var(--r); padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.keyset-h { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 13px; }
+.keyset-h b { font-weight: 600; font-size: 14px; }
+.key-in { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.5fr); gap: 8px 10px; align-items: end; }
+.key-in .f > label { font-weight: 400; font-size: 12px; color: var(--muted); }
+.f input.mono { font-family: var(--font-mono); font-size: 13px; }
+.keytext { overflow-wrap: anywhere; }
+table.els td:first-child { min-width: 190px; }
+table.els td:nth-child(2) { min-width: 150px; }
+table.els td:nth-child(5) { min-width: 150px; }
+table.els .stack { min-width: 200px; }
+table.els .key4-in { max-width: 330px; }
+.stack { display: flex; flex-direction: column; gap: 6px; min-width: 250px; }
+.upload { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: var(--r); }
+.upload-text { display: flex; flex-direction: column; gap: 4px; flex: 1 1 320px; min-width: 0; max-width: 66ch; }
+.btn-file { position: relative; }
+.btn-file:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.vh { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.el-edit { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
+.bulk { border: 1px solid var(--line-strong); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--surface); }
+.bulk-head { display: flex; flex-direction: column; gap: 2px; }
+.bulk-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; counter-reset: bulk; }
+.bulk-steps li { counter-increment: bulk; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 14px; border-radius: var(--r); background: var(--bg); }
+.bulk-steps li > b::before { content: counter(bulk) ". "; font-family: var(--font-mono); font-weight: 500; color: var(--muted); }
+.bulk-steps .btn { margin-top: auto; }
+.bulk-result { display: flex; flex-direction: column; gap: 6px; }
+table.pde td { vertical-align: middle; }
+table.pde { table-layout: fixed; min-width: 720px; }
+table.pde th:nth-child(1) { width: 48px; }
+table.pde th:nth-child(2) { width: 24%; }
+table.pde th:nth-child(3) { width: 26%; }
+table.pde th:nth-child(4) { width: 116px; }
+table.pde th:nth-child(6) { width: 140px; }
+table.pde td { overflow-wrap: anywhere; }
+table.pde tr.bad > td { background: var(--crit-soft); }
+table.pde tr.edit-row > td { background: var(--bg); padding: 14px; }
+table.pde .btn-quiet { padding: 4px 8px; }
+
+/* worked comparison */
+.compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.compare > div { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.compare dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; }
+.compare dt { color: var(--muted); }
+.compare dd { margin: 0; overflow-wrap: anywhere; }
+.quote { font: 500 15px/1.4 var(--font-display); }
+
+/* ---------- chips, pills, meters ---------- */
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; background: var(--surface-2); color: var(--ink); }
+.chip-req { background: var(--req); color: var(--req-ink); }
+.chip-team { background: var(--team); color: var(--team-ink); }
+.chip-good { background: var(--good-soft); color: var(--good); }
+.chip-warn { background: var(--warn-soft); color: var(--warn); }
+.chip-crit { background: var(--crit-soft); color: var(--crit); }
+.meter { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.meter-track { flex: 1 1 120px; max-width: 220px; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.meter-fill { height: 100%; border-radius: 4px; background: var(--bar); }
+.meter b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); align-items: center; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--line-strong); }
+.sw-req { background: var(--req); } .sw-team { background: var(--team); }
+
+/* ---------- review ---------- */
+.summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; }
+.kv { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.kv span { font-size: 12px; color: var(--muted); }
+.kv b { font-weight: 500; overflow-wrap: anywhere; }
+.qgroups { columns: 320px 3; column-gap: 28px; }
+.qgroup { break-inside: avoid; padding-bottom: 14px; display: flex; flex-direction: column; gap: 4px; }
+.qgroup h4 { font: 600 13px/1.4 var(--font-body); }
+.qgroup ul { display: flex; flex-direction: column; gap: 5px; }
+.qgroup li { font-size: 14px; padding-left: 14px; position: relative; }
+.qgroup li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 5px; height: 5px; border-radius: 50%; background: var(--line-strong); }
+.done-card { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.req-id { font: 500 14px var(--font-mono); }
+
+/* ---------- team views ---------- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.stat b { font: 600 26px/1.15 var(--font-display); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--muted); }
+.scroll { position: relative; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-weight: 600; font-size: 12.5px; white-space: nowrap; background: var(--surface-2); }
+tbody tr:last-child > td { border-bottom: 0; }
+th.c-req, tr.grp th.c-req { background: var(--req); color: var(--req-ink); }
+th.c-team, tr.grp th.c-team { background: var(--team); color: var(--team-ink); }
+tr.grp th { font: 500 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding-block: 5px; }
+td.c-team { background: color-mix(in srgb, var(--team) 35%, transparent); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.row-btn { cursor: pointer; }
+.row-btn:hover > td { background: var(--sel); }
+tr[aria-selected="true"] > td { background: var(--sel); box-shadow: inset 0 1px 0 var(--sel-line), inset 0 -1px 0 var(--sel-line); }
+.cell-in { padding: 5px 8px; font-size: 13px; min-width: 130px; }
+input.cell-in.mono { font-family: var(--font-mono); min-width: 110px; }
+.nowrap { white-space: nowrap; }
+.mono { font-family: var(--font-mono); font-size: 13px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.detail { display: flex; flex-direction: column; gap: 18px; }
+.detail-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; align-items: flex-start; }
+.detail-head > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px; }
+.told { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px 24px; }
+.panes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pane { border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.pane-req { background: color-mix(in srgb, var(--req) 45%, var(--surface)); }
+.pane-team { background: color-mix(in srgb, var(--team) 45%, var(--surface)); }
+.pane-req .eyebrow { color: var(--req-ink); } .pane-team .eyebrow { color: var(--team-ink); }
+.pane .told { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.pane .cell-in { min-width: 0; font-size: 14px; padding: 7px 10px; }
+.src-btn { padding: 2px 6px; margin-left: -6px; text-align: left; white-space: nowrap; }
+table.pin tbody td:first-child, table.pin thead tr:not(.grp) th:first-child { position: sticky; left: 0; z-index: 1; }
+table.pin tbody td:first-child { background: var(--surface); min-width: 150px; }
+table.pin th, table.pin td { padding-inline: 9px; }
+table.pin tbody tr[aria-selected="true"] td:first-child, table.pin tbody tr.row-btn:hover td:first-child { background: var(--sel); }
+.key4-in { display: grid; grid-template-columns: repeat(2, minmax(118px, 1fr)); gap: 6px; min-width: 244px; }
+.key4-in .cell-in { min-width: 0; }
+.compare .chip { align-self: flex-start; }
+.note-crit { background: var(--crit-soft); color: var(--crit); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.demand-bar { display: flex; align-items: center; gap: 8px; min-width: 150px; }
+.demand-bar i { display: block; height: 10px; border-radius: 0 4px 4px 0; background: var(--bar); }
+.demand-bar b { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- disclosures, guide, how to use ---------- */
+details.held, details.guide { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+details > summary { cursor: pointer; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "+"; font: 500 15px var(--font-mono); width: 14px; color: var(--muted); }
+details[open] > summary::before { content: "\2212"; }
+details.held .scroll { border: 0; border-top: 1px solid var(--line); border-radius: 0 0 var(--r) var(--r); }
+.guide-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; padding: 4px 16px 16px 38px; }
+.guide-body ol { list-style: decimal; padding-left: 18px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
+.guide-body ol b { color: var(--ink); font-weight: 600; }
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px 4px; }
+.flow li { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.chev { padding: 10px 18px 10px 24px; min-height: 62px; display: flex; flex-direction: column; justify-content: center; font-weight: 600; line-height: 1.25;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%); }
+.flow li:first-child .chev { padding-left: 14px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%); }
+.chev small { font: 500 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.chev.you { background: var(--req); color: var(--req-ink); }
+.chev.team { background: var(--team); color: var(--team-ink); }
+.chev.both { background: var(--surface-2); color: var(--ink); }
+.flow p { font-size: 14px; color: var(--muted); padding-right: 14px; }
+.tips { list-style: disc; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; color: var(--muted); max-width: 70ch; }
+.card .stats .stat { background: var(--bg); border: 0; }
+
+td.pre { white-space: pre-line; min-width: 240px; }
+tr.unconf > td:not(.c-team), .pane-req.unconf .kv b { font-style: italic; }
+.chip.mono { font-family: var(--font-mono); font-size: 12px; font-style: normal; }
+table.wgl td:nth-child(2) { background: color-mix(in srgb, var(--crit-soft) 55%, transparent); }
+table.wgl td:nth-child(3) { background: color-mix(in srgb, var(--good-soft) 55%, transparent); }
+table.wgl td:nth-child(1) { white-space: nowrap; }
+table.wgl td, table.deftab td { min-width: 150px; }
+table.deftab td.c-reqcell { background: color-mix(in srgb, var(--req) 45%, transparent); }
+table.deftab td:first-child { white-space: nowrap; }
+.card > h3 { margin-top: 4px; }
+
+/* ---------- definitions ---------- */
+.defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
+.def { padding: 14px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.def dt { font-weight: 600; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.def dd { margin: 0; color: var(--muted); max-width: 60ch; }
+.roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.roles > div { padding: 14px 16px; border-radius: 8px; display: flex; flex-direction: column; gap: 4px; }
+.role-req { background: var(--req); color: var(--req-ink); }
+.role-team { background: var(--team); color: var(--team-ink); }
+.key4 { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font: 500 13px var(--font-mono); }
+.key4 span { padding: 2px 8px; border: 1px solid currentColor; border-radius: 4px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: var(--r); font-size: 14px; z-index: 40; max-width: calc(100% - 32px); }
+
+@media (max-width: 860px) {
+  .survey { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; }
+  .steps { flex-direction: row; flex-wrap: wrap; }
+  .step { width: auto; grid-template-columns: 26px auto; }
+  .step small { display: none; }
+  .rail-note { display: none; }
+  .panes, .defs, .guide-body, .flow { grid-template-columns: minmax(0, 1fr); }
+  .guide-body { padding-left: 16px; }
+  .flow .chev, .flow li:first-child .chev { clip-path: none; border-radius: var(--r); padding: 10px 14px; min-height: 0; }
+}
+@media (max-width: 620px) {
+  .bar-in, .wrap, .tabs { padding-inline: 16px; }
+  .bar { position: static; }
+  .bar-in { position: relative; }
+  .userbox { position: static; }
+  .user-menu { left: 16px; right: 16px; top: calc(100% - 4px); width: auto; }
+  .panel { padding: 16px; }
+  .grid2, .grid3, .compare, .summary, .roles, .bulk-steps { grid-template-columns: minmax(0, 1fr); }
+  .key-in { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .el { grid-template-columns: minmax(0, 1fr); }
+  .el-n { padding-top: 0; }
+  .grid2 > span:empty { display: none; }
+  .step span { display: none; }
+  .step[aria-current="step"] span { display: block; }
+  .view-head h1 { font-size: 22px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .meter-fill, .demand-bar i { transition: width .25s ease; }
+}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <div>
+        <div class="brand-name">Corporate Risk Data Intake</div>
+        <div class="brand-sub">Mockup with placeholder names and example data</div>
+      </div>
+    </div>
+    <div class="bar-right">
+      <div class="role-sw" role="group" aria-label="View as">
+        <span class="role-lab">View as</span>
+        <button type="button" class="role" id="role-req" data-role="req">Requester</button>
+        <button type="button" class="role" id="role-team" data-role="team">Data plane team</button>
+      </div>
+      <div class="userbox" id="userbox"></div>
+    </div>
+  </div>
+  <div class="tabbar" id="tabbar" data-role="req"><nav class="tabs" id="tabs" role="tablist" aria-label="Views"></nav></div>
+</header>
+<main id="app" class="wrap"></main>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script>
+(function () {
+  'use strict';
+
+  /* ================= reference data: every name here is a placeholder ================= */
+  const TEAMS = ['Operational Risk', 'Financial Crimes', 'Credit Risk', 'Market Risk', 'Compliance', 'Model Risk', 'Other'];
+  const STAGES = [
+    ['explore', 'Exploring an idea'],
+    ['pilot', 'Piloting with files we load by hand'],
+    ['funded', 'Funded and in build'],
+    ['live', 'Live and needs a production feed']
+  ];
+  const CONSUMER = ['Report', 'Dashboard', 'Model', 'AI tool', 'Analytics', 'Other'];
+  const AI_PROMPTS = [['yes', 'Yes, written and tested'], ['progress', 'In progress'], ['no', 'Not yet']];
+  const AI_OVERSIGHT = [['yes', 'Yes'], ['no', 'Not yet']];
+  const TODAY = [['manual', 'We load files by hand'], ['feed', 'From an existing feed or report'], ['none', 'We do not have it']];
+  const KINDS = [['sor', 'System or application'], ['ads', 'Approved data source'], ['report', 'Report or dashboard'], ['file', 'File or spreadsheet'], ['unsure', 'Not sure']];
+  const CATEGORIES = ['Customer', 'Account', 'Transaction', 'Employee', 'Issue or event', 'Loss event', 'Change or initiative', 'Application inventory', 'Third party', 'Other'];
+  const PRIORITY = ['High', 'Medium', 'Low'];
+  const FREQ = ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annual', 'Ad hoc'];
+  const YESNO = [['yes', 'Yes'], ['no', 'No']];
+  const YESNOUNK = [['yes', 'Yes'], ['no', 'No'], ['unknown', 'Unknown']];
+  const AUDIENCE = ['Board or board committee', 'Executive committee', 'Regulators', 'Risk committee', 'Internal team only'];
+  const HISTORY = ['1 month', '3 months', '13 months', '24 months', '7 years'];
+  const DATA_TYPES = [['snapshot', 'Snapshot at a point in time'], ['transactional', 'Transactional: every record or event'], ['both', 'Both']];
+  const REG_TYPES = ['Regulation', 'Policy', 'Exam finding or regulatory commitment', 'Other'];
+  const GOLDEN = [['golden', 'It is the authoritative source for this data'], ['seen', 'It is where we see the data today'], ['unsure', 'Not sure']];
+  const FIELD_TYPES = [['field', 'One field'], ['summary', 'Summary of several'], ['unsure', 'Not sure']];
+  const KEY_PARTS = [['db', 'Database'], ['schema', 'Schema'], ['table', 'Table'], ['element', 'Element']];
+
+  const STATUS = ['Not started', 'In review', 'Questions sent', 'Ready to source', 'Parked'];
+  const CHECK = ['Right source for these fields', 'Golden source is elsewhere', 'Not an application', 'Not found in inventory'];
+  const CALL = ['Use existing platform data', 'Expand existing feed', 'Source from ADS', 'Interim SOR', 'Net new', 'Not a data source'];
+  const ADS_HAS = ['Yes', 'No', 'Unknown'];
+  const TEAM_CODES = { 'Operational Risk': 'OPR', 'Financial Crimes': 'FCR', 'Credit Risk': 'CRD', 'Market Risk': 'MKT', 'Compliance': 'CMP', 'Model Risk': 'MDL', 'Other': 'OTH' };
+  const TEAM_PRI = ['P1', 'P2', 'P3'];
+  const TARGET = ['2027 Q1', '2027 Q2', '2027 H2', 'Not scheduled'];
+  const NEED = [['required', 'Required'], ['nice', 'Nice-to-have']];
+  const SOURCED = ['Yes', 'No', 'Unknown'];
+  const GAPS = ['None; already sourced', 'Ask for a screenshot or system extract', 'Ask where they pull it today', 'Check with the source or ADS team', 'Add to the existing feed', 'Net new sourcing'];
+
+  const CATALOG = [
+    { id: 'A', appId: 'APP-10001', name: 'Source A', desc: 'Customer master', kind: 'sor', platforms: ['Platform 1', 'Platform 2'], fields: 38, ads: { name: 'ADS 1', when: 'Live' },
+      held: { db: 'platform1_db', schema: 'cust', table: 'customer_master', cols: [['legal_nm', 'Customer legal name'], ['cust_type_cd', 'Customer type'], ['onboard_dt', 'Onboarding date'], ['risk_rating_cd', 'Risk rating'], ['domicile_ctry_cd', 'Country of domicile'], ['status_cd', 'Customer status']] } },
+    { id: 'B', appId: 'APP-10002', name: 'Source B', desc: 'Deposit accounts', kind: 'sor', platforms: ['Platform 1'], fields: 54, ads: { name: 'ADS 2', when: '2029-Q1' },
+      held: { db: 'platform1_db', schema: 'dep', table: 'account', cols: [['acct_id', 'Account ID'], ['open_dt', 'Account open date'], ['status_cd', 'Account status'], ['prod_cd', 'Product code'], ['avg_bal_amt', 'Average balance'], ['od_flag', 'Overdraft flag']] } },
+    { id: 'C', appId: 'APP-10003', name: 'Source C', desc: 'Auto lending', kind: 'sor', platforms: ['Platform 1'], fields: 27, ads: { name: 'ADS 3', when: 'Live' },
+      held: { db: 'platform1_db', schema: 'auto', table: 'loan_master', cols: [['loan_id', 'Loan ID'], ['borrower_cust_id', 'Borrower customer ID'], ['orig_dt', 'Origination date'], ['dpd_cnt', 'Days past due'], ['pmt_status_cd', 'Payment status'], ['curr_bal_amt', 'Current balance']] } },
+    { id: 'D', appId: 'APP-10004', name: 'Source D', desc: 'Application registry', kind: 'sor', platforms: ['Platform 3'], fields: 19, ads: null,
+      held: { db: 'platform3_db', schema: 'reg', table: 'application', cols: [['app_id', 'Application ID'], ['app_nm', 'Application name'], ['owner_emp_id', 'Application owner'], ['go_live_dt', 'Go-live date'], ['change_init_id', 'Change initiative ID'], ['criticality_cd', 'Criticality']] } },
+    { id: 'E', appId: 'APP-10005', name: 'Source E', desc: 'Issues and defects', kind: 'sor', platforms: ['Platform 3'], fields: 23, ads: null,
+      held: { db: 'platform3_db', schema: 'grc', table: 'issue', cols: [['issue_id', 'Issue ID'], ['status_cd', 'Issue status'], ['open_dt', 'Date opened'], ['due_dt', 'Due date'], ['severity_cd', 'Severity'], ['owner_emp_id', 'Issue owner']] } },
+    { id: 'F', appId: 'APP-10006', name: 'Source F', desc: 'Loss events', kind: 'sor', platforms: [], fields: 0, ads: { name: 'ADS 4', when: '2028-Q3' } },
+    { id: 'G', appId: 'APP-10007', name: 'Source G', desc: 'Third-party inventory', kind: 'sor', platforms: [], fields: 0, ads: null },
+    { id: 'H', appId: 'APP-10008', name: 'Source H', desc: 'Executive risk dashboard', kind: 'report', platforms: [], fields: 0, ads: null }
+  ];
+  const adsLabel = c => (c && c.ads ? c.ads.name + ' · ' + c.ads.when : 'No aligned ADS');
+  const cat = id => CATALOG.find(c => c.id === id);
+  const labelOf = (list, v) => { const hit = list.find(o => (Array.isArray(o) ? o[0] : o) === v); return hit ? (Array.isArray(hit) ? hit[1] : hit) : ''; };
+
+  /* ================= model ================= */
+  let seq = 0;
+  const nid = p => p + (++seq);
+
+  function newElement(o) {
+    o = o || {};
+    return Object.assign({ id: nid('e'), name: '', definition: '', why: '', population: '', example: '', need: '', fieldType: '' }, o, {
+      key: Object.assign({ db: '', schema: '', table: '', element: '' }, o.key),
+      t: Object.assign({ db: '', schema: '', table: '', element: '', sourced: '', gap: '', notes: '' }, o.t)
+    });
+  }
+  function newSource(o) {
+    o = o || {};
+    const src = Object.assign({
+      id: nid('s'), catalog: '', name: '', appId: '', kind: '', categories: [], useCase: '', priority: '', priorityWhy: '', frequency: '',
+      dataType: '', consumer: '', neededBy: '', regulatory: '', regType: '', regDetail: '', reporting: '', audience: [], reportName: '', history: '', historyDepth: '',
+      golden: '', sme: '', samples: '', unknownFields: false, describe: '', uploadError: ''
+    }, o, {
+      elements: (o.elements || []).map(newElement), files: (o.files || []).slice(),
+      t: Object.assign({ reqId: '', held: '', platform: '', others: '', adsHas: '', adsName: '', adsDate: '', call: '', status: '', next: '', check: '', pri: '', target: '' }, o.t)
+    });
+    if (!src.appId && CATALOG.some(c => c.id === src.catalog)) src.appId = CATALOG.find(c => c.id === src.catalog).appId;
+    return src;
+  }
+  function newRequest(o) {
+    o = o || {};
+    return Object.assign({
+      id: '', example: false, channel: 'survey', submitted: '', status: 'Not started', title: '', team: '', requester: '', email: '',
+      initiative: '', outcome: '', stage: '', aiPrompts: '', aiOversight: '', today: '', tomorrow: '', sel: 0
+    }, o, { sources: (o.sources || []).map(newSource) });
+  }
+
+  const filled = v => Array.isArray(v) ? v.length > 0 : String(v == null ? '' : v).trim() !== '';
+  const els = s => s.unknownFields ? [] : s.elements;
+  const srcName = s => { const c = cat(s.catalog); return c ? c.name : (s.name.trim() || 'Unnamed source'); };
+  const srcDesc = s => { const c = cat(s.catalog); return c ? c.desc : (s.catalog === 'other' ? 'Not in our inventory' : ''); };
+  const srcKey = s => cat(s.catalog) ? s.catalog : 'other:' + s.name.trim().toLowerCase();
+  const isReport = s => s.kind === 'report' || (cat(s.catalog) || {}).kind === 'report';
+  const platformsOf = s => (cat(s.catalog) || { platforms: [] }).platforms;
+  const keyCount = e => KEY_PARTS.filter(([k]) => filled(e.key[k])).length;
+  const elName = e => e.name.trim() || e.key.element.trim() || (e.key.table.trim() ? 'Table ' + e.key.table.trim() : 'Unnamed element');
+  const keyText = k => KEY_PARTS.map(([part]) => k[part].trim() || '?').join('.');
+  const carryKey = e => KEY_PARTS.forEach(([k]) => { if (!e.t[k]) e.t[k] = e.key[k].trim(); });
+
+  const consumersOf = r => [...new Set(r.sources.map(s => s.consumer).filter(Boolean))];
+  const usesAI = r => r.sources.some(s => s.consumer === 'AI tool');
+  const earliest = r => r.sources.map(s => s.neededBy).filter(Boolean).sort()[0] || '';
+  const inPlatforms = s => { const c = cat(s.catalog); return c ? (c.platforms.length ? 'Yes' : 'No') : 'Unknown'; };
+
+  function suggestCall(s) {
+    const c = cat(s.catalog);
+    if (isReport(s)) return 'Not a data source';
+    if (platformsOf(s).length) return 'Use existing platform data';
+    if (!els(s).length) return '';
+    if (c && c.ads && c.ads.when === 'Live') return 'Source from ADS';
+    return 'Net new';
+  }
+  function teamDefaults(s) {
+    const c = cat(s.catalog);
+    if (!s.t.call) s.t.call = suggestCall(s);
+    if (!s.t.held) s.t.held = inPlatforms(s);
+    if (!s.t.platform && c) s.t.platform = c.platforms.join('; ');
+    if (!s.t.adsHas) s.t.adsHas = c ? (c.ads ? 'Yes' : 'No') : 'Unknown';
+    if (c && c.ads) { if (!s.t.adsName) s.t.adsName = c.ads.name; if (!s.t.adsDate) s.t.adsDate = c.ads.when; }
+    s.elements.forEach(e => {
+      const h = c && c.held;
+      if (!e.t.sourced) {
+        if (h && filled(e.key.element) && h.cols.some(col => col[0] === e.key.element.trim()) && (!filled(e.key.table) || e.key.table.trim() === h.table)) {
+          e.t.sourced = 'Yes';
+          if (!e.t.gap) e.t.gap = GAPS[0];
+          if (!filled(e.key.db)) e.t.db = h.db;
+          if (!filled(e.key.schema)) e.t.schema = h.schema;
+          if (!filled(e.key.table)) e.t.table = h.table;
+        } else if (c && !c.platforms.length) e.t.sourced = 'No';
+      }
+      carryKey(e);
+    });
+  }
+  /* The data plane team gives every source row a request ID, TEAM-###, that ties it to its PDE rows. */
+  const rowSeq = {};
+  function prepRequest(r) {
+    const code = TEAM_CODES[r.team] || 'OTH';
+    r.sources.forEach(s => {
+      teamDefaults(s);
+      if (!s.t.status) s.t.status = r.status || 'Not started';
+      if (!s.t.reqId) { rowSeq[code] = (rowSeq[code] || 0) + 1; s.t.reqId = code + '-' + String(rowSeq[code]).padStart(3, '0'); }
+    });
+  }
+
+  const countTeams = v => String(v || '').split(';').map(x => x.trim()).filter(Boolean).length;
+  const fillOthers = r => r.sources.forEach(s => { if (!s.t.others) s.t.others = otherAreas(r, s).join('; '); });
+  /* Validation lookup: check the application ID the requester gave against our platform details. */
+  function lookup(s) {
+    const id = s.appId.trim();
+    if (!id) return { cls: 'chip-warn', text: 'No application ID to check' };
+    const hit = CATALOG.find(c => c.appId.toLowerCase() === id.toLowerCase());
+    if (!hit) return { cls: 'chip-crit', text: id + ': not in our platforms' };
+    if (cat(s.catalog) && hit.id !== s.catalog) return { cls: 'chip-warn', text: id + ' belongs to ' + hit.name + ', not the source named' };
+    return hit.platforms.length ? { cls: 'chip-good', text: id + ': in our platforms (' + hit.platforms.join(', ') + ')' } : { cls: 'chip-crit', text: id + ': not in our platforms' };
+  }
+  const statusChip = st => '<span class="chip ' + ({ 'In review': 'chip-team', 'Questions sent': 'chip-warn', 'Ready to source': 'chip-good' }[st] || '') + '">' + st + '</span>';
+  const rollup = r => STATUS.map(st => [st, r.sources.filter(s => s.t.status === st).length]).filter(x => x[1]).map(x => '<span class="chip ' + ({ 'In review': 'chip-team', 'Questions sent': 'chip-warn', 'Ready to source': 'chip-good' }[x[0]] || '') + '">' + x[1] + ' ' + x[0] + '</span>').join('');
+
+  /* One checklist drives step validation, the completeness meter and the follow-up questions. */
+  function checklist(r) {
+    const c = [];
+    const add = (step, path, ok, soft) => c.push({ step, path, ok: !!ok, soft: !!soft });
+    ['title', 'team', 'requester', 'email', 'initiative'].forEach(k => add(0, k, filled(r[k])));
+    ['outcome', 'stage', 'today', 'tomorrow'].forEach(k => add(1, k, filled(r[k])));
+    add(2, 'sources', r.sources.length > 0);
+    r.sources.forEach((s, i) => {
+      const p = 'sources.' + i + '.';
+      add(2, p + 'catalog', filled(s.catalog));
+      if (s.catalog === 'other') add(2, p + 'name', filled(s.name));
+      ['kind', 'categories', 'useCase', 'priority', 'priorityWhy', 'frequency', 'dataType', 'consumer', 'golden', 'regulatory', 'reporting', 'history'].forEach(k => add(2, p + k, filled(s[k])));
+      if (s.regulatory === 'yes') { add(2, p + 'regType', filled(s.regType)); add(2, p + 'regDetail', filled(s.regDetail)); }
+      if (s.reporting === 'yes') add(2, p + 'audience', filled(s.audience));
+      if (s.history === 'yes') add(2, p + 'historyDepth', filled(s.historyDepth));
+      if (s.unknownFields) {
+        add(3, p + 'describe', filled(s.describe));
+        add(3, p + 'elements', false, true);
+      } else {
+        add(3, p + 'elements', s.elements.length > 0);
+        s.elements.forEach((e, j) => {
+          const ep = p + 'elements.' + j + '.';
+          add(3, ep + 'name', filled(e.name));
+          add(3, ep + 'definition', filled(e.definition), true);
+          add(3, ep + 'why', filled(e.why), true);
+          add(3, ep + 'key', keyCount(e) > 0, true);
+        });
+      }
+    });
+    if (usesAI(r)) { add(2, 'aiPrompts', filled(r.aiPrompts)); add(2, 'aiOversight', filled(r.aiOversight)); }
+    return c;
+  }
+  const score = r => { const c = checklist(r); return { ok: c.filter(x => x.ok).length, total: c.length }; };
+  const blocking = (r, step) => checklist(r).filter(x => !x.ok && !x.soft && (step == null || x.step === step));
+
+  function questions(r) {
+    const q = [];
+    const ask = (who, text) => q.push({ who, text });
+    const name = r.initiative.trim() || 'this initiative';
+    const srcList = a => a.slice(0, 4).map(srcName).join(', ') + (a.length > 4 ? ' and ' + (a.length - 4) + ' more' : '');
+    if (r.stage === 'explore' || r.stage === 'pilot' || !r.stage) ask('About the request', 'Is ' + name + ' funded and a priority for this year? What decision depends on this data?');
+    if (!filled(r.tomorrow)) ask('About the request', 'If we delivered this data tomorrow in an automated way, what would you do with it?');
+    if (usesAI(r) && (r.aiPrompts !== 'yes' || r.aiOversight !== 'yes')) ask('About the request', 'Which prompts or use cases are ready for the AI tool, and which function will review what it produces?');
+    const noWhy = r.sources.filter(s => filled(s.priority) && !filled(s.priorityWhy));
+    if (noWhy.length) ask('About the request', 'What is the rationale for the priority given to ' + srcList(noWhy) + '? It lets us compare priorities across teams.');
+    const noUse = r.sources.filter(s => !filled(s.consumer));
+    if (noUse.length) ask('About the request', 'What will consume the data from ' + srcList(noUse) + ': a report, dashboard, model, AI tool or analytics?');
+    r.sources.forEach(s => {
+      const n = srcName(s), c = cat(s.catalog), list = els(s);
+      if (isReport(s)) ask(n, 'This looks like a report or dashboard. Which system feeds it?');
+      else if (!list.length) ask(n, (filled(s.useCase) ? '' : 'What is the business use case for this source? ') + 'Which category of data and which specific fields do you need? Send any files or sample extracts you have.');
+      else if (!filled(s.useCase)) ask(n, 'What is the business use case for this source?');
+      const names = a => a.slice(0, 3).map(e => '"' + elName(e) + '"').join(', ') + (a.length > 3 ? ' and ' + (a.length - 3) + ' more' : '');
+      const noKey = list.filter(e => keyCount(e) === 0);
+      const summaries = list.filter(e => e.fieldType === 'summary' && !filled(e.key.element));
+      const unsure = noKey.filter(e => e.fieldType !== 'field' && e.fieldType !== 'summary');
+      if (noKey.length) ask(n, 'No part of the four-part key was given for ' + names(noKey) + '. Do you know the database, schema, table or element for ' + (noKey.length === 1 ? 'it' : 'any of them') + '?');
+      if (summaries.length) ask(n, names(summaries) + (summaries.length === 1 ? ' is a summary' : ' are summaries') + '. Which individual fields make ' + (summaries.length === 1 ? 'it' : 'them') + ' up?');
+      if (unsure.length) ask(n, (unsure.length === 1 ? 'Is ' + names(unsure) + ' one field or a summary of several?' : 'Are ' + names(unsure) + ' single fields or summaries of several?'));
+      if (c && c.platforms.length) ask(n, 'We already source ' + c.fields + ' fields from ' + n + ' into ' + c.platforms.join(' and ') + '. Do those meet your need, and what else is missing?');
+      if (list.length && s.golden !== 'golden' && !isReport(s)) ask(n, 'Is ' + n + ' the authoritative source for these fields, or is it where you see them today?');
+      if (!filled(s.regulatory) || s.regulatory === 'unknown') ask(n, 'Is this need regulatory driven? Yes only if a regulation, regulatory commitment, exam finding or policy mandate requires it.');
+      else if (s.regulatory === 'yes' && (!filled(s.regType) || !filled(s.regDetail))) ask(n, 'Which regulation, policy or exam finding requires this? Please cite it.');
+      if (list.length && !filled(s.dataType)) ask(n, 'Do you need a snapshot at a point in time, or every transaction or event?');
+      const lost = list.filter(e => /screenshot|extract/i.test(e.t.gap)), vague = list.filter(e => /where .*pull/i.test(e.t.gap));
+      if (lost.length) ask(n, 'We could not find ' + names(lost) + ' in the data we hold. Can you send a screenshot from the system or a system extract so we can identify ' + (lost.length === 1 ? 'it' : 'them') + '?');
+      if (vague.length) ask(n, 'We are not sure which application ' + names(vague) + (vague.length === 1 ? ' comes' : ' come') + ' from. Where do you pull ' + (vague.length === 1 ? 'it' : 'them') + ' from today?');
+      if (s.reporting === 'yes' && !filled(s.audience)) ask(n, 'Who is the audience for the report this feeds?');
+      if (s.history === 'yes' && (!filled(s.historyDepth) || /not sure/i.test(s.historyDepth))) ask(n, 'How far back do you need historical data?');
+    });
+    return q;
+  }
+  function groupQ(q) {
+    const g = [];
+    q.forEach(x => { let hit = g.find(y => y.who === x.who); if (!hit) g.push(hit = { who: x.who, items: [] }); hit.items.push(x.text); });
+    return g;
+  }
+
+  /* ================= example data ================= */
+  function exampleDraft() {
+    return newRequest({
+      example: true, title: 'Third-party risk monitoring feed', team: 'Operational Risk', requester: 'J. Sample',
+      email: 'j.sample@example.com', initiative: 'Initiative Delta',
+      outcome: 'Monthly monitoring of critical third parties against their open issues, reported to the risk committee. Replaces a spreadsheet compiled by hand each month.',
+      stage: 'funded', today: 'manual',
+      tomorrow: 'Load it into the monitoring report, retire the manual spreadsheet, and have the oversight analyst review exceptions each month.',
+      sources: [
+        {
+          catalog: 'G', kind: 'sor', categories: ['Third party'],
+          useCase: 'Monthly view of critical third parties and their relationship owners, so the committee can see which critical relationships have open issues. Without it the report cannot be produced.',
+          priority: 'High', priorityWhy: 'Feeds the monthly risk committee pack starting Q2 2027', frequency: 'Monthly', dataType: 'snapshot', consumer: 'Report', neededBy: '2027-03-31',
+          regulatory: 'yes', regType: 'Policy', regDetail: 'Internal third-party risk policy (cite section)',
+          reporting: 'yes', audience: ['Risk committee'], reportName: 'Third-party monitoring report',
+          history: 'yes', historyDepth: '24 months', golden: 'golden', sme: 'Source G product owner', samples: 'yes',
+          elements: [
+            { name: 'Third-party ID', example: 'TP-004512', need: 'required', definition: 'Unique identifier for the third party in the inventory', why: 'Join key to issues', population: 'Active third parties', fieldType: 'field', key: { db: 'tp_inventory', schema: 'core', table: 'third_party', element: 'tp_id' } },
+            { name: 'Criticality rating', example: 'Tier 1', need: 'required', definition: 'Current criticality tier assigned to the third party', why: 'Filter the report to critical third parties', population: 'Active third parties', fieldType: 'field', key: { table: 'third_party', element: 'criticality_tier' } },
+            { name: 'Relationship owner', need: 'nice', definition: 'Named employee accountable for the relationship', why: 'Route exceptions to the owner', population: 'Critical third parties only', fieldType: 'field' }
+          ]
+        },
+        {
+          catalog: 'E', kind: 'sor', categories: ['Issue or event'], useCase: 'Count open issues linked to each critical third party, so the report shows where remediation is overdue.',
+          priority: 'Medium', priorityWhy: 'Completes the same report; the first version can ship without it', frequency: 'Monthly', dataType: 'snapshot', consumer: 'Report', neededBy: '2027-06-30',
+          regulatory: 'no', reporting: 'yes', audience: ['Risk committee'], history: 'no', golden: 'seen', samples: 'no',
+          elements: [
+            { name: 'Issue ID', example: 'ISS-20871', need: 'required', definition: 'Unique identifier for the issue', why: 'Count and de-duplicate issues', population: 'Open issues linked to a third party', fieldType: 'field', key: { db: 'issues_db', schema: 'grc', table: 'issue', element: 'issue_id' } },
+            { name: 'Issue status', example: 'Open', need: 'required', definition: 'Open, closed or in validation', why: 'Report only open issues', fieldType: 'field', key: { table: 'issue', element: 'status_cd' } },
+            { name: 'Issue ageing', example: '90+ days', need: 'nice', definition: 'How long the issue has been open, by band', why: 'Highlight overdue items', fieldType: 'summary' }
+          ]
+        }
+      ]
+    });
+  }
+
+  function seedRequests() {
+    const thin = cid => ({ catalog: cid, kind: 'unsure', priority: cid === 'A' || cid === 'F' ? 'High' : 'Medium', frequency: cid === 'B' ? 'Quarterly' : 'Monthly',
+      regulatory: cid === 'F' ? 'yes' : cid === 'B' ? 'unknown' : 'no', reporting: cid === 'H' ? 'yes' : 'no', history: cid === 'F' ? 'yes' : 'no', consumer: 'AI tool', unknownFields: true,
+      t: { next: cid === 'H' ? 'This looks like a dashboard, not a data source. Which system feeds it?' : 'Tell us the business use case and which fields you need from this source.' } });
+    const list = [
+      newRequest({
+        id: 'SUB-0001', example: true, sel: 2, channel: 'spreadsheet', submitted: '2026-09-24', status: 'Questions sent',
+        title: 'AI insights on risk events', team: 'Operational Risk', requester: 'Requester 1', email: 'requester.one@example.com',
+        initiative: 'Initiative Alpha', outcome: 'Feed an AI tool that sits on the risk platform and summarises events.', stage: 'pilot',
+        aiPrompts: 'no', aiOversight: 'no', today: 'manual', tomorrow: '',
+        sources: [thin('A'), thin('B'), Object.assign(thin('D'), {
+          unknownFields: false, categories: ['Change or initiative'],
+          t: { next: 'Confirm which stakeholder roles are needed. Confirm whether the go-live date should come from the application registry or the project tool.' },
+          elements: [
+            { name: 'Initiative ID', definition: 'Identifier of the change initiative', why: '', fieldType: 'field' },
+            { name: 'Stakeholders', definition: 'People assigned to the application', why: '', fieldType: 'summary' },
+            { name: 'Go-live date', definition: '', why: '', fieldType: 'unsure', t: { sourced: 'No', gap: 'Ask for a screenshot or system extract' } }
+          ]
+        }), thin('E'), thin('F'), thin('H')]
+      }),
+      newRequest({
+        id: 'SUB-0002', example: true, submitted: '2026-09-29', status: 'In review',
+        title: 'Customer risk rating refresh', team: 'Financial Crimes', requester: 'Requester 2', email: 'requester.two@example.com',
+        initiative: 'Initiative Beta', outcome: 'Recalculate customer risk ratings each month and route high-risk customers for review.', stage: 'funded',
+        today: 'feed', tomorrow: 'Run the rating model on it in parallel for one cycle, then switch the model input over.',
+        sources: [
+          {
+            catalog: 'A', kind: 'sor', categories: ['Customer'], useCase: 'Customer attributes that drive the rating. The model cannot score a customer without them.', priority: 'High', priorityWhy: 'Model revalidation depends on it',
+            frequency: 'Monthly', dataType: 'snapshot', consumer: 'Model', neededBy: '2027-01-31',
+            regulatory: 'yes', regType: 'Regulation', regDetail: 'Customer due diligence requirements (cite section)', reporting: 'no', history: 'yes', historyDepth: '24 months', golden: 'golden', samples: 'yes',
+            t: { check: 'Right source for these fields', pri: 'P1', target: '2027 Q1', status: 'Ready to source', next: 'Share the fields we hold and confirm they cover the model inputs.' },
+            elements: [
+              { name: 'Customer legal name', need: 'required', definition: 'Registered legal name of the customer', why: 'Screening input', population: 'Active customers', fieldType: 'field', key: { db: 'platform1_db', schema: 'cust', table: 'customer_master', element: 'legal_nm' }, t: { sourced: 'Yes', gap: 'None; already sourced' } },
+              { name: 'Customer type', example: 'Business', need: 'required', definition: 'Individual, business or trust', why: 'Rating segment', population: 'Active customers', fieldType: 'field', key: { table: 'customer_master', element: 'cust_type_cd' }, t: { db: 'platform1_db', schema: 'cust', sourced: 'Yes', gap: 'None; already sourced' } },
+              { name: 'Onboarding date', example: '2019-06-30', need: 'nice', definition: 'Date the relationship was opened', why: 'Tenure factor in the rating', fieldType: 'field', t: { sourced: 'Unknown', notes: 'Not in the customer master table. Check the onboarding tables.' } }
+            ]
+          },
+          {
+            catalog: 'B', kind: 'sor', categories: ['Account'], useCase: 'Account status and age for each rated customer.', priority: 'High', priorityWhy: 'Second input to the same model', frequency: 'Monthly', dataType: 'snapshot', consumer: 'Model', neededBy: '2027-01-31',
+            regulatory: 'yes', regType: 'Regulation', regDetail: 'Customer due diligence requirements (cite section)', reporting: 'no', history: 'no', golden: 'seen',
+            t: { call: 'Expand existing feed', pri: 'P1' },
+            elements: [
+              { name: 'Account open date', need: 'required', definition: 'Date the account was opened', why: 'Tenure factor', fieldType: 'field', key: { schema: 'dep', table: 'account', element: 'open_dt' } },
+              { name: 'Account status', definition: 'Open, dormant or closed', why: 'Exclude closed accounts', fieldType: 'field' }
+            ]
+          },
+          {
+            catalog: 'C', kind: 'sor', categories: ['Account', 'Customer'], useCase: 'Link auto loans to the rated customer.', priority: 'Medium', priorityWhy: 'Improves coverage but is not required for revalidation', frequency: 'Monthly', dataType: 'snapshot', consumer: 'Model', neededBy: '2027-03-31',
+            regulatory: 'no', reporting: 'no', history: 'no', golden: 'golden',
+            elements: [
+              { name: 'Loan ID', example: 'LN-0098231', need: 'required', definition: 'Unique identifier of the auto loan', why: 'Join key', fieldType: 'field', key: { db: 'auto_db', schema: 'loan', table: 'loan_master', element: 'loan_id' } },
+              { name: 'Borrower customer ID', definition: 'Customer identifier of the primary borrower', why: 'Link the loan to the customer', fieldType: 'field', key: { table: 'loan_master', element: 'borrower_cust_id' } }
+            ]
+          }
+        ]
+      }),
+      newRequest({
+        id: 'SUB-0003', example: true, submitted: '2026-10-01', status: 'Not started',
+        title: 'Portfolio early-warning monitoring', team: 'Credit Risk', requester: 'Requester 3', email: 'requester.three@example.com',
+        initiative: 'Initiative Gamma', outcome: 'Spot deteriorating accounts earlier than the quarterly review does.', stage: 'explore',
+        today: 'none', tomorrow: 'Build a first version of the early-warning view and test it with two portfolio managers.',
+        sources: [
+          {
+            catalog: 'B', kind: 'sor', categories: ['Account', 'Transaction'], useCase: 'Balance trends on deposit accounts held by borrowers.', priority: 'Medium', priorityWhy: 'Pilot with two portfolio managers', frequency: 'Weekly', dataType: 'transactional', consumer: 'Dashboard',
+            regulatory: 'no', reporting: 'yes', audience: ['Internal team only'], history: 'yes', historyDepth: 'Not sure', golden: 'unsure',
+            elements: [
+              { name: 'Average balance', definition: 'Average daily balance over the period', why: 'Trend signal', fieldType: 'summary' },
+              { name: 'Overdraft flag', definition: 'Whether the account was overdrawn in the period', why: 'Stress signal', fieldType: 'field' }
+            ]
+          },
+          {
+            catalog: 'C', kind: 'sor', categories: ['Account'], useCase: 'Delinquency on auto loans.', priority: 'High', frequency: 'Monthly', dataType: 'both', consumer: 'Analytics',
+            regulatory: 'no', reporting: 'yes', audience: ['Internal team only'], history: 'yes', historyDepth: '7 years', golden: 'golden',
+            unknownFields: true, describe: 'Anything that shows payment behaviour and days past due on each loan.'
+          }
+        ]
+      })
+    ];
+    list.forEach(prepRequest);
+    return list;
+  }
+
+  /* ================= state ================= */
+  const ROLE_VIEWS = {
+    req: [['request', 'New request'], ['mine', 'Submitted requests'], ['howto', 'How to use'], ['definitions', 'Definitions']],
+    team: [['triage', 'Triage'], ['demand', 'Demand by source'], ['definitions', 'Definitions']]
+  };
+  const VIEWS = ['request', 'mine', 'howto', 'triage', 'demand', 'definitions'];
+  /* Sample users stand in for the company sign-in and directory. Nothing here is a real person. */
+  const USERS = [
+    { id: 'u1', name: 'J. Sample', initials: 'JS', email: 'j.sample@example.com', empId: 'U000001', team: 'Operational Risk', role: 'req' },
+    { id: 'u2', name: 'R. Example', initials: 'RE', email: 'r.example@example.com', empId: 'U000002', team: 'Financial Crimes', role: 'req' },
+    { id: 'u3', name: 'A. Placeholder', initials: 'AP', email: 'a.placeholder@example.com', empId: 'U000003', team: 'Credit Risk', role: 'req' },
+    { id: 'u4', name: 'T. Member', initials: 'TM', email: 't.member@example.com', empId: 'U000004', team: 'Data plane team', role: 'team' }
+  ];
+  const ROLE_NAME = { req: 'Requester', team: 'Data plane team' };
+  const state = {
+    view: 'request', role: 'req', userId: 'u1', lastUser: { req: 'u1', team: 'u4' }, signedIn: true, menuOpen: false, mineTeam: 'Operational Risk', step: 0, errors: new Set(), submittedId: '',
+    draft: exampleDraft(), requests: seedRequests(), picked: 'SUB-0001', nextNum: 4
+  };
+  state.requests.forEach(fillOthers);
+  const app = document.getElementById('app'), userbox = document.getElementById('userbox');
+  const me = () => USERS.find(u => u.id === state.userId);
+  function setUser(id) {
+    const u = USERS.find(x => x.id === id);
+    state.userId = u.id; state.role = u.role; state.lastUser[u.role] = u.id;
+    if (u.role === 'req') state.mineTeam = u.team;
+  }
+  const setRole = role => setUser(state.lastUser[role]);
+  /* The request carries the signed-in requester's name, email and team. */
+  function syncDraftUser() {
+    const u = me(), d = state.draft;
+    if (u.role === 'req') { d.requester = u.name; d.email = u.email; d.team = u.team; }
+  }
+  const stamp = path => { const m = /^requests\.(\d+)\.sources\.(\d+)\.(t\.|elements\.\d+\.t\.)/.exec(path); if (m) { const t = state.requests[Number(m[1])].sources[Number(m[2])].t; t.by = me().name; t.at = new Date().toISOString().slice(0, 10); } };
+
+  const get = path => path.split('.').reduce((o, k) => (o == null ? o : o[k]), state);
+  const set = (path, v) => { const ks = path.split('.'); const last = ks.pop(); ks.reduce((o, k) => o[k], state)[last] = v; };
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const idOf = (path, v) => 'f-' + (path + (v == null ? '' : '-' + v)).replace(/[^a-zA-Z0-9]+/g, '-');
+  const norm = o => Array.isArray(o) ? o : [o, o];
+
+  /* ================= form helpers ================= */
+  const optTag = o => o.opt ? ' <span class="opt">optional</span>' : '';
+  const hintTag = o => o.hint ? '<p class="hint">' + esc(o.hint) + '</p>' : '';
+  const errTag = (bad, o) => bad ? '<p class="err">' + esc(o.err || 'Answer this to continue.') + '</p>' : '';
+  const cls = (o, bad) => 'f' + (o.wide ? ' f-wide' : '') + (bad ? ' f-bad' : '');
+
+  function fText(label, path, o) {
+    o = o || {};
+    const id = idOf(path), v = get(path), bad = state.errors.has(path);
+    const control = o.area
+      ? '<textarea id="' + id + '" data-bind="' + path + '" rows="' + (o.rows || 3) + '" placeholder="' + esc(o.ph || '') + '">' + esc(v) + '</textarea>'
+      : '<input id="' + id + '" type="' + (o.type || 'text') + '" data-bind="' + path + '" value="' + esc(v) + '" placeholder="' + esc(o.ph || '') + '"' + (o.list ? ' list="' + id + '-l"' : '') + '>' +
+        (o.list ? '<datalist id="' + id + '-l">' + o.list.map(x => '<option value="' + esc(x) + '"></option>').join('') + '</datalist>' : '');
+    return '<div class="' + cls(o, bad) + '"><label for="' + id + '">' + esc(label) + optTag(o) + '</label>' + hintTag(o) + control + errTag(bad, o) + '</div>';
+  }
+  function fSelect(label, path, options, o) {
+    o = o || {};
+    const id = idOf(path), v = get(path), bad = state.errors.has(path);
+    return '<div class="' + cls(o, bad) + '"><label for="' + id + '">' + esc(label) + optTag(o) + '</label>' + hintTag(o) +
+      '<select id="' + id + '" data-bind="' + path + '"><option value="">Choose</option>' +
+      options.map(norm).map(([val, lab]) => '<option value="' + esc(val) + '"' + (val === v ? ' selected' : '') + '>' + esc(lab) + '</option>').join('') +
+      '</select>' + errTag(bad, o) + '</div>';
+  }
+  function fChoices(type, label, path, options, o) {
+    o = o || {};
+    const v = get(path), bad = state.errors.has(path);
+    const on = val => type === 'radio' ? v === val : v.includes(val);
+    const attr = type === 'radio' ? 'name="' + path + '" data-bind="' + path + '"' : 'data-bindset="' + path + '"';
+    return '<fieldset class="' + cls(o, bad) + '"><legend>' + esc(label) + optTag(o) + '</legend>' + hintTag(o) +
+      '<div class="choices' + (o.stack ? ' stack' : '') + '">' +
+      options.map(norm).map(([val, lab]) => '<label class="choice"><input type="' + type + '" id="' + idOf(path, val) + '" ' + attr + ' value="' + esc(val) + '"' + (on(val) ? ' checked' : '') + '><span>' + esc(lab) + '</span></label>').join('') +
+      '</div>' + errTag(bad, o) + '</fieldset>';
+  }
+  const fRadios = (l, p, opts, o) => fChoices('radio', l, p, opts, o);
+  const fChecks = (l, p, opts, o) => fChoices('checkbox', l, p, opts, o);
+  function cSelect(path, options, aria) {
+    const v = get(path);
+    return '<select class="cell-in" id="' + idOf(path) + '" data-bind="' + path + '" aria-label="' + esc(aria) + '"><option value="">Not set</option>' +
+      options.map(x => '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>';
+  }
+  const cText = (path, aria, ph) => '<input class="cell-in mono" type="text" id="' + idOf(path) + '" data-bind="' + path + '" value="' + esc(get(path)) + '" placeholder="' + esc(ph || '') + '" aria-label="' + esc(aria) + '">';
+
+  function meter(r) {
+    const s = score(r), pct = s.total ? Math.round(100 * s.ok / s.total) : 0;
+    return '<div class="meter"><span class="meter-track"><span class="meter-fill" style="display:block;width:' + pct + '%"></span></span><span><b>' + s.ok + ' of ' + s.total + '</b> answers given</span></div>';
+  }
+  function qList(q) {
+    if (!q.length) return '<p class="muted small">Nothing obvious is missing.</p>';
+    return '<div class="qgroups">' + groupQ(q).map(g => '<div class="qgroup"><h4>' + esc(g.who) + '</h4><ul>' + g.items.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul></div>').join('') + '</div>';
+  }
+
+  /* ================= view: new request ================= */
+  const STEPS = [
+    ['About the request', 'Who is asking, and for what'],
+    ['Use and readiness', 'What happens with the data'],
+    ['Source request', 'Phase 1: the sources you need'],
+    ['PDE requirements', 'Phase 2: the data elements you need'],
+    ['Review and send', 'Check it, then submit']
+  ];
+
+  function stepAbout() {
+    const u = me();
+    return '<div class="grid2">' +
+      '<div class="whoami f-wide"><span class="avatar" aria-hidden="true">' + esc(u.initials) + '</span><div class="whoami-text"><span class="eyebrow">Requesting as</span><b>' + esc(u.name) + '</b>' +
+      '<span class="muted small">' + esc(u.team) + ' · ' + esc(u.email) + '</span></div><span class="chip">From your sign-in</span></div>' +
+      fText('Request title', 'draft.title', { wide: true, ph: 'A short name we can both refer to' }) +
+      fText('Initiative or tool', 'draft.initiative', { wide: true, ph: 'The programme, model, report or AI tool the data supports' }) +
+      '</div>';
+  }
+  function stepUse() {
+    return '<div class="grid2">' +
+      fText('What decision, report or control will this data support?', 'draft.outcome', { wide: true, area: true }) +
+      fRadios('Where is the initiative today?', 'draft.stage', STAGES, { stack: true }) +
+      fRadios('How do you get this data today?', 'draft.today', TODAY, { stack: true }) +
+      fText('If we delivered this data tomorrow, what would you do with it?', 'draft.tomorrow', { wide: true, area: true, hint: 'Name the first use and who acts on it.' }) +
+      '</div>';
+  }
+  function sourceBlock(s, i) {
+    const p = 'draft.sources.' + i + '.', c = cat(s.catalog);
+    const options = CATALOG.map(x => [x.id, x.name + ' · ' + x.desc]).concat([['other', 'Not listed']]);
+    return '<div class="block"><div class="block-head"><div class="block-title"><span class="n">Source ' + (i + 1) + '</span><h3>' + esc(s.catalog ? srcName(s) : 'New source') + '</h3>' +
+      (srcDesc(s) ? '<span class="muted small">' + esc(srcDesc(s)) + '</span>' : '') + '</div>' +
+      '<button type="button" class="btn btn-quiet btn-danger" data-act="rm-source" data-i="' + i + '">Remove source</button></div>' +
+      '<div class="block-body"><div class="grid2">' +
+      fSelect('Source application', p + 'catalog', options) +
+      (s.catalog === 'other' ? fText('Name of the application', p + 'name') : '') +
+      fText('Application ID', p + 'appId', { opt: true, ph: 'APP-00000', hint: 'As listed in the application inventory.' }) +
+      fSelect('What kind of source is it?', p + 'kind', KINDS) +
+      (c && c.platforms.length ? '<p class="note f-wide">We already bring ' + c.fields + ' fields from ' + esc(c.name) + ' into ' + esc(c.platforms.join(' and ')) + '. You can pick from that list in the next step.</p>' : '') +
+      fChecks('Data category', p + 'categories', CATEGORIES, { wide: true, hint: 'The broad subject area of the data you need.' }) +
+      fText('Business use case', p + 'useCase', { wide: true, area: true, rows: 3, hint: 'Two to four sentences on the decision, report or analysis this data enables. Specific enough that a reviewer understands why each element is needed.' }) +
+      fRadios('Priority', p + 'priority', PRIORITY) +
+      fText('Priority rationale', p + 'priorityWhy', { ph: 'For example: feeds the monthly risk committee pack' }) +
+      fSelect('Frequency', p + 'frequency', FREQ, { hint: 'How often you need refreshed data.' }) +
+      fSelect('Data type', p + 'dataType', DATA_TYPES, { hint: 'A point-in-time snapshot, or every transaction or event.' }) +
+      fSelect('Data consumer', p + 'consumer', CONSUMER, { hint: 'What will consume the data.' }) +
+      fText('Needed by', p + 'neededBy', { type: 'date', opt: true }) +
+      fRadios('Why this source?', p + 'golden', GOLDEN, { stack: true, wide: true }) +
+      '</div><div class="sub"><div class="grid2">' +
+      fRadios('Regulatory driven?', p + 'regulatory', YESNOUNK, { hint: 'Yes only if a regulation, regulatory commitment, exam finding or policy mandate requires it.' }) +
+      (s.regulatory === 'yes' ? fSelect('What drives it?', p + 'regType', REG_TYPES) : '<span></span>') +
+      (s.regulatory === 'yes' ? fText('Regulation or requirement', p + 'regDetail', { wide: true, hint: 'Cite it, with the section if you can.' }) : '') +
+      fRadios('Report distribution?', p + 'reporting', YESNO, { hint: 'Does the data feed a report or dashboard distributed beyond your team?' }) +
+      (s.reporting === 'yes' ? fChecks('Report audience', p + 'audience', AUDIENCE) : '<span></span>') +
+      (s.reporting === 'yes' ? fText('Name of the report', p + 'reportName', { opt: true, wide: true }) : '') +
+      fRadios('Historical data needed?', p + 'history', YESNO) +
+      (s.history === 'yes' ? fText('History depth', p + 'historyDepth', { list: HISTORY, ph: 'For example 13 months, 24 months, 7 years' }) : '<span></span>') +
+      '</div></div><div class="sub"><div class="grid2">' +
+      fText('Who knows this source best?', p + 'sme', { opt: true }) +
+      fRadios('Can you share sample files, screenshots or system extracts?', p + 'samples', YESNO, { opt: true }) +
+      '</div></div></div></div>';
+  }
+  function stepSources() {
+    const d = state.draft;
+    return '<p class="muted">One entry per source application. Tell us what you need from each and why.</p>' +
+      (state.errors.has('draft.sources') ? '<p class="err">Add at least one source to continue.</p>' : '') +
+      d.sources.map(sourceBlock).join('') +
+      '<div><button type="button" class="btn" data-act="add-source">Add a source</button></div>' +
+      (usesAI(d) ? '<div class="block"><div class="block-head"><div class="block-title"><h3>Because an AI tool will consume this data</h3></div></div><div class="block-body"><div class="grid2">' +
+        fRadios('Are the prompts or use cases for the AI tool ready?', 'draft.aiPrompts', AI_PROMPTS) +
+        fRadios('Is there a named function that will review what the tool produces?', 'draft.aiOversight', AI_OVERSIGHT) + '</div></div></div>' : '');
+  }
+  function keyChip(e) {
+    const n = keyCount(e);
+    return '<span class="chip ' + (n === 4 ? 'chip-good' : n ? 'chip-team' : '') + '">' + (n === 4 ? '&#10003; Full key' : n ? n + ' of 4 parts' : 'No key yet') + '</span>';
+  }
+  const PAGE = 25;
+  function elementRow(s, i, e, j) {
+    const p = 'draft.sources.' + i + '.elements.' + j + '.';
+    return '<div class="el-edit"><div class="grid2">' +
+      fText('Business element name', p + 'name', { ph: 'In your own words', err: 'A business name is required, even if you do not know the system field name.' }) +
+      fSelect('Required or nice-to-have', p + 'need', NEED, { opt: true }) +
+      fText('Business definition', p + 'definition') +
+      fText('Why needed and how used', p + 'why') +
+      fText('Population or filters', p + 'population', { opt: true, ph: 'Which records are in scope, for example active retail customers' }) +
+      fText('Example values', p + 'example', { opt: true, ph: 'One or two sample values' }) +
+      '</div><div class="keyset" role="group" aria-label="Four-part key for element ' + (j + 1) + '"><p class="keyset-h"><b>System field name and four-part key</b><span class="muted">Fill in any parts you know</span>' + keyChip(e) + '</p><div class="key-in">' +
+      KEY_PARTS.map(([k, lab]) => '<div class="f"><label for="' + idOf(p + 'key.' + k) + '">' + (k === 'element' ? 'Element (field name)' : lab) + '</label><input class="mono" type="text" id="' + idOf(p + 'key.' + k) + '" data-bind="' + p + 'key.' + k + '" value="' + esc(e.key[k]) + '" autocapitalize="off" spellcheck="false"></div>').join('') +
+      fSelect('One field or a summary?', p + 'fieldType', FIELD_TYPES) +
+      '</div></div><div class="btn-row"><button type="button" class="btn" data-act="edit-el" data-i="' + i + '" data-j="' + j + '">Done</button></div></div>';
+  }
+  function elementTable(s, i) {
+    const p = 'draft.sources.' + i + '.', n = s.elements.length;
+    if (!n) return '<p class="muted small">No data elements yet. Upload the template above' + (cat(s.catalog) && cat(s.catalog).held ? ', pick from the fields we hold,' : '') + ' or add one by hand.</p>';
+    const limit = s.showAll || n <= PAGE ? n : PAGE;
+    const rows = s.elements.slice(0, limit).map((e, j) => {
+      const bad = state.errors.has(p + 'elements.' + j + '.name'), open = s.editing === j, k = keyCount(e);
+      return '<tr' + (bad ? ' class="bad"' : '') + '><td class="num muted">' + (j + 1) + '</td>' +
+        '<td>' + (filled(e.name) ? '<b>' + esc(e.name) + '</b>' : '<span class="chip chip-crit">Needs a name</span>') + '</td>' +
+        '<td class="small">' + (esc(e.definition) || '<span class="muted">None</span>') + '</td>' +
+        '<td class="nowrap">' + (e.need ? labelOf(NEED, e.need) : '<span class="muted">Not said</span>') + '</td>' +
+        '<td>' + (k ? '<span class="mono keytext">' + esc(keyText(e.key)) + '</span>' : '<span class="muted">Not known</span>') + '</td>' +
+        '<td class="nowrap"><button type="button" class="btn btn-quiet" id="edit-' + i + '-' + j + '" data-act="edit-el" data-i="' + i + '" data-j="' + j + '" aria-expanded="' + open + '">' + (open ? 'Close' : 'Edit') + '</button>' +
+        '<button type="button" class="btn btn-quiet btn-danger" data-act="rm-el" data-i="' + i + '" data-j="' + j + '" aria-label="Remove element ' + (j + 1) + ' from ' + esc(srcName(s)) + '">Remove</button></td></tr>' +
+        (open ? '<tr class="edit-row"><td colspan="6">' + elementRow(s, i, e, j) + '</td></tr>' : '');
+    }).join('');
+    return '<div class="scroll"><table class="pde"><thead><tr><th class="num">#</th><th>Business element name</th><th>Business definition</th><th>Required?</th><th>System field or key</th><th><span class="vh">Actions</span></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      (n > PAGE ? '<div class="btn-row"><span class="muted small">Showing ' + limit + ' of ' + n + '.</span><button type="button" class="btn btn-quiet" data-act="show-all" data-i="' + i + '">' + (s.showAll ? 'Show the first ' + PAGE : 'Show all ' + n) + '</button></div>' : '');
+  }
+  function bulkPanel(d) {
+    const u = d.pdeUpload, names = d.sources.map(srcName);
+    const result = u ? '<div class="bulk-result"><div class="facts"><span class="chip chip-good">&#10003; ' + esc(u.name) + ' · ' + u.loaded + (u.loaded === 1 ? ' row loaded' : ' rows loaded') + '</span>' +
+      u.perSource.filter(x => x[1]).map(x => '<span class="chip">' + esc(x[0]) + ': ' + x[1] + '</span>').join('') + '</div>' +
+      (u.noName ? '<p class="err">' + u.noName + (u.noName === 1 ? ' row has' : ' rows have') + ' no business element name. Fix them below, or in the file and upload again.</p>' : '') +
+      (u.unmatched.length ? '<p class="err">' + u.unmatched.reduce((n, x) => n + x[1], 0) + ' rows were left out because their Source Application is not in this request: ' + esc(u.unmatched.slice(0, 5).map(x => x[0] + ' (' + x[1] + ')').join(', ')) + '. It must match one of: ' + esc(names.join(', ')) + '.</p>' : '') +
+      '<p class="muted small">Uploading again replaces the rows from the last upload. Rows you added by hand are kept.</p></div>' : '';
+    return '<section class="bulk" aria-label="Bulk upload"><div class="bulk-head"><h3>Many data elements? Use the template</h3><p class="muted small">A table can hold hundreds of elements. Fill them in once in Excel and upload the file to fill in this page.</p></div>' +
+      '<ol class="bulk-steps"><li><b>Download the template</b><span class="muted small">An Excel file with the columns we need, and your ' + (names.length === 1 ? 'source' : names.length + ' sources') + ' as a pick list.</span>' +
+      '<button type="button" class="btn" data-act="dl-template">Download template</button></li>' +
+      '<li><b>Fill it in</b><span class="muted small">One row per data element. Business Element Name is required on every row. Give the system field name, database, schema and table where you know them.</span></li>' +
+      '<li><b>Upload it</b><span class="muted small">Each row goes under the source named in its Source Application column.</span>' +
+      '<label class="btn btn-primary btn-file" for="up-all">Upload completed template<input class="vh" type="file" id="up-all" data-upload="all" accept=".xlsx,.xlsm,.csv,.tsv,.txt"></label></li></ol>' +
+      (d.pdeError ? '<p class="err" role="alert">' + esc(d.pdeError) + '</p>' : '') + result + '</section>';
+  }
+  function goodLooksLike() {
+    const kd = (a, b, c, e) => '<dl><dt>Element</dt><dd>Customer legal name</dd><dt>Key</dt><dd class="mono">' + [a, b, c, e].map(x => x || '<span class="muted">?</span>').join('.') + '</dd></dl>';
+    return '<div class="compare"><div><span class="chip chip-crit">Too thin to act on</span><p class="quote">&ldquo;We need Source A.&rdquo;</p><p class="muted small">We cannot tell which of its fields you mean.</p></div>' +
+      '<div><span class="chip chip-team">Already helps</span>' + kd('', '', 'customer_master', 'legal_nm') + '<p class="muted small">Two of the four parts is enough for us to find the rest.</p></div>' +
+      '<div><span class="chip chip-good">&#10003; Ready to source</span>' + kd('platform1_db', 'cust', 'customer_master', 'legal_nm') + '<p class="muted small">Database, schema, table and element.</p></div></div>';
+  }
+  function heldPanel(s, i) {
+    const c = cat(s.catalog);
+    if (!c || !c.held) return '';
+    const h = c.held, have = new Set(s.elements.map(e => e.key.table.trim() + '.' + e.key.element.trim()));
+    return '<details class="held" data-open="draft.sources.' + i + '.heldOpen"' + (s.heldOpen ? ' open' : '') + '><summary><b>Fields we already hold from ' + esc(c.name) + '</b>' +
+      '<span class="muted small">Showing ' + h.cols.length + ' example fields of ' + c.fields + '. Add the ones you need and their keys are filled in for you.</span></summary>' +
+      '<div class="scroll"><table><thead><tr><th>Field</th><th>Four-part key</th><th><span class="vh">Add</span></th></tr></thead><tbody>' +
+      h.cols.map((col, n) => '<tr><td>' + esc(col[1]) + '</td><td class="mono keytext">' + esc([h.db, h.schema, h.table, col[0]].join('.')) + '</td><td class="num">' +
+        (have.has(h.table + '.' + col[0]) ? '<span class="chip chip-good">&#10003; Added</span>' : '<button type="button" class="btn" data-act="add-held" data-i="' + i + '" data-n="' + n + '" aria-label="Add ' + esc(col[1]) + '">Add</button>') + '</td></tr>').join('') +
+      '</tbody></table></div></details>';
+  }
+  function stepElements() {
+    const d = state.draft;
+    if (!d.sources.length) return '<p class="note">Add a source in the previous step first.</p>';
+    return '<p class="muted">One row per data element. A business name is required for each, even if you do not know the system field name. What helps us most is the four-part key: database, schema, table and element. Give whatever you have. Even two of the four helps us find it.</p>' +
+      bulkPanel(d) + goodLooksLike() + d.sources.map((s, i) => {
+      const p = 'draft.sources.' + i + '.';
+      const body = s.unknownFields
+        ? fText('Describe the data you need in your own words', p + 'describe', { area: true, hint: 'We will come back to you with the fields we think match.' })
+        : heldPanel(s, i) + (state.errors.has(p + 'elements') ? '<p class="err">Add at least one data element, upload the template, or tick the box below.</p>' : '') +
+          elementTable(s, i) +
+          '<div><button type="button" class="btn" data-act="add-el" data-i="' + i + '">Add a data element by hand</button></div>';
+      return '<div class="block"><div class="block-head"><div class="block-title"><span class="n">Source ' + (i + 1) + '</span><h3>' + esc(srcName(s)) + '</h3><span class="muted small">' + esc(srcDesc(s)) + '</span></div>' +
+        '<span class="chip">' + (s.unknownFields ? 'Fields not known yet' : s.elements.length + (s.elements.length === 1 ? ' element' : ' elements')) + '</span></div>' +
+        '<div class="block-body">' + body +
+        '<label class="choice" style="align-self:flex-start"><input type="checkbox" id="' + idOf(p + 'unknownFields') + '" data-bind="' + p + 'unknownFields"' + (s.unknownFields ? ' checked' : '') + '><span>I do not know the specific fields yet</span></label>' +
+        '</div></div>';
+    }).join('');
+  }
+  function stepReview() {
+    const d = state.draft, q = questions(d), open = blocking(d);
+    const kv = (k, v) => '<div class="kv"><span>' + esc(k) + '</span><b>' + (filled(v) ? esc(v) : '<span class="muted">Not answered</span>') + '</b></div>';
+    const keys = s => { const full = s.elements.filter(e => keyCount(e) === 4).length, part = s.elements.filter(e => keyCount(e) > 0 && keyCount(e) < 4).length; return full + ' full, ' + part + ' partial, ' + (s.elements.length - full - part) + ' none'; };
+    return '<div class="summary">' +
+      kv('Request', d.title) + kv('Requesting team', d.team) + kv('Initiative or tool', d.initiative) + kv('Stage', labelOf(STAGES, d.stage)) +
+      kv('Data consumers', consumersOf(d).join(', ')) + kv('Requested by', d.requester) + kv('Earliest needed by', earliest(d)) +
+      '</div>' + meter(d) +
+      (open.length ? '<p class="banner"><span><strong>' + open.length + ' required ' + (open.length === 1 ? 'answer is' : 'answers are') + ' missing.</strong> Sending will take you to the first one.</span></p>' : '') +
+      '<div class="scroll"><table><thead><tr><th>Source application</th><th>Priority</th><th>Frequency</th><th>Consumer</th><th>Regulatory</th><th class="num">Data elements</th><th>Four-part keys</th></tr></thead><tbody>' +
+      (d.sources.map(s => '<tr><td><b>' + esc(srcName(s)) + '</b><br><span class="muted small">' + esc(srcDesc(s)) + '</span></td><td>' + esc(s.priority) + '</td><td>' + esc(s.frequency) + '</td><td>' + esc(s.consumer) + '</td><td>' + esc(labelOf(YESNOUNK, s.regulatory)) + '</td><td class="num">' + (s.unknownFields ? 'Not known yet' : s.elements.length) + '</td><td>' + (s.unknownFields || !s.elements.length ? '<span class="muted">None</span>' : keys(s)) + '</td></tr>').join('') ||
+        '<tr><td colspan="7" class="muted">No sources added.</td></tr>') +
+      '</tbody></table></div>' +
+      '<div class="sub"><h3>What we are likely to ask you next</h3><p class="muted small">Answering these now saves a round trip. You can still send the request as it is.</p>' + qList(q) + '</div>';
+  }
+
+  function viewRequest() {
+    syncDraftUser();
+    const d = state.draft;
+    const head = '<div class="view-head"><p class="eyebrow">For requesting teams</p><h1>Request data for the Corporate Risk data plane</h1>' +
+      '<p>Tell us what you need and why. The more of each data element&rsquo;s four-part key you can give us, the sooner we can say whether we already hold it.</p></div>';
+    if (state.submittedId) {
+      return head + '<section class="panel done-card"><span class="chip chip-good">&#10003; Sent</span><h2>Submission <span class="req-id">' + esc(state.submittedId) + '</span> is with the data plane team</h2>' +
+        '<p class="muted">Each source in it now has its own request ID. The data plane team fills in its side next: whether we already hold the source, the approved data source, a recommended approach, and any open questions for you.</p>' +
+        '<div class="btn-row"><button type="button" class="btn btn-primary" data-act="see-mine">Track it in Submitted requests</button><button type="button" class="btn" data-act="new-request">Start another request</button>' +
+        '<button type="button" class="btn btn-quiet" data-act="open-triage">Switch to the data plane team view</button></div></section>';
+    }
+    const body = [stepAbout, stepUse, stepSources, stepElements, stepReview][state.step]();
+    const last = state.step === STEPS.length - 1;
+    return head +
+      (d.example
+        ? '<div class="banner"><span><strong>Example answers are loaded</strong> to show what a complete request looks like.</span><button type="button" class="btn" data-act="clear-draft">Clear and start blank</button></div>'
+        : '<div class="btn-row"><button type="button" class="btn btn-quiet" data-act="load-example">Load the worked example</button></div>') +
+      '<div class="survey"><aside class="rail"><ol class="steps">' +
+      STEPS.map((s, i) => '<li><button type="button" class="step' + (i < state.step && !blocking(d, i).length ? ' done' : '') + '" data-act="go-step" data-step="' + i + '"' + (i === state.step ? ' aria-current="step"' : '') + '><span>' + s[0] + '<small>' + s[1] + '</small></span></button></li>').join('') +
+      '</ol><div class="rail-note"><p><b>You tell us</b> what data you need and why, with any parts of the four-part key you know.</p><p><b>We complete</b> the key: database, schema, table and element.</p></div></aside>' +
+      '<section class="panel"><div class="panel-head"><p class="eyebrow">Step ' + (state.step + 1) + ' of ' + STEPS.length + '</p><h2 id="step-h" tabindex="-1">' + STEPS[state.step][0] + '</h2></div>' +
+      body +
+      '<div class="panel-foot">' + (state.step > 0 ? '<button type="button" class="btn" data-act="back">Back</button>' : '<span></span>') +
+      '<button type="button" class="btn btn-primary" data-act="' + (last ? 'submit' : 'next') + '">' + (last ? 'Send request' : 'Continue') + '</button></div></section></div>';
+  }
+
+  /* ================= view: submitted requests (requester) ================= */
+  function viewMine() {
+    const team = state.mineTeam, list = state.requests.filter(r => r.team === team);
+    const head = '<div class="view-head"><p class="eyebrow">For requesting teams</p><h1>Submitted requests</h1><p>Where each of your team\'s requests stands, and what the data plane team needs from you next.</p></div>' +
+      '<p class="note">Showing requests from your team, <b>' + esc(team) + '</b>. Your team comes from your sign-in.</p>';
+    if (!list.length) return head + '<section class="card"><p>No requests from ' + esc(team) + ' yet.</p><div class="btn-row"><button type="button" class="btn btn-primary" data-act="start-blank">Start a request</button></div></section>';
+    return head + list.map(r => '<section class="card"><div class="card-head"><div><p class="eyebrow">' + esc(r.id) + ' · sent ' + esc(r.submitted) + (r.example ? ' · example' : '') + '</p><h2>' + esc(r.title) + '</h2></div><div class="facts">' + rollup(r) + '</div></div>' + meter(r) +
+      '<div class="scroll"><table><thead><tr class="grp"><th class="c-req" colspan="2">You provided</th><th class="c-team" colspan="4">Data plane team filled in</th></tr>' +
+      '<tr><th class="c-req">Source application</th><th class="c-req num">Data elements</th><th class="c-team">Request ID</th><th class="c-team">Status</th><th class="c-team">Recommended approach</th><th class="c-team">Open questions or next step</th></tr></thead><tbody>' +
+      r.sources.map(s => '<tr><td><b>' + esc(srcName(s)) + '</b><br><span class="muted small">' + esc(srcDesc(s)) + '</span></td><td class="num">' + (els(s).length || '<span class="chip chip-crit">None listed</span>') + '</td>' +
+        '<td class="c-team"><span class="chip chip-team mono">' + esc(s.t.reqId) + '</span></td><td class="c-team">' + statusChip(s.t.status) + '</td>' +
+        '<td class="c-team">' + (esc(s.t.call) || '<span class="muted">Not set yet</span>') + '</td><td class="c-team pre">' + (esc(s.t.next) || '<span class="muted">Nothing yet</span>') + '</td></tr>').join('') +
+      '</tbody></table></div></section>').join('');
+  }
+
+  /* ================= view: triage ================= */
+  function otherAreas(r, s) {
+    const key = srcKey(s), set = new Set();
+    state.requests.forEach(x => { if (x !== r && x.team !== r.team && x.sources.some(y => srcKey(y) === key)) set.add(x.team); });
+    return [...set];
+  }
+  const yn = v => v === 'yes' ? 'Yes' : v === 'no' ? 'No' : v === 'unknown' ? 'Unknown' : '<span class="muted">?</span>';
+  const elCount = r => r.sources.reduce((n, s) => n + els(s).length, 0);
+
+  function requestSummary(r) {
+    const stat = (n, label) => '<div class="stat"><b>' + n + '</b><span>' + label + '</span></div>';
+    const split = (list, pick) => list.map(v => [v, r.sources.filter(s => pick(s) === v).length]).filter(x => x[1]).map(x => '<span class="chip">' + x[1] + ' ' + esc(x[0]) + '</span>').join('') || '<span class="muted small">None set</span>';
+    return '<div class="card"><h3>Where this request stands</h3><div class="stats">' +
+      stat(r.sources.length, 'sources requested') + stat(r.sources.filter(s => !els(s).length).length, 'with no fields listed') +
+      stat(r.sources.filter(s => platformsOf(s).length).length, 'found in our platforms') + stat(r.sources.filter(s => s.t.call === 'Not a data source').length, 'not a data source') + '</div>' +
+      '<div class="told"><div class="kv"><span>Priority they gave</span><div class="facts">' + split(PRIORITY, s => s.priority) + '</div></div>' +
+      '<div class="kv"><span>Recommended approach</span><div class="facts">' + split(CALL, s => s.t.call) + '</div></div>' +
+      '<div class="kv"><span>Status</span><div class="facts">' + rollup(r) + '</div></div></div></div>';
+  }
+  function triageDetail(r, ri) {
+    const q = questions(r);
+    const ready = r.aiPrompts === 'yes' && r.aiOversight === 'yes', unconf = r.channel === 'spreadsheet';
+    const facts = [
+      r.stage ? '<span class="chip ' + (r.stage === 'funded' || r.stage === 'live' ? 'chip-good' : 'chip-warn') + '">' + esc(labelOf(STAGES, r.stage)) + '</span>' : '',
+      consumersOf(r).map(c => '<span class="chip">' + esc(c) + '</span>').join(''),
+      usesAI(r) ? '<span class="chip ' + (ready ? 'chip-good' : 'chip-warn') + '">' + (ready ? 'Prompts and oversight ready' : 'Prompts or oversight not ready') + '</span>' : '',
+      earliest(r) ? '<span class="chip">Earliest needed by ' + esc(earliest(r)) + '</span>' : ''
+    ].join('');
+    const kv = (k, v) => '<div class="kv"><span>' + esc(k) + '</span><b>' + (filled(v) ? esc(v) : '<span class="muted">Not answered</span>') + '</b></div>';
+    const pick = Math.min(r.sel || 0, r.sources.length - 1);
+    const dash = v => esc(v) || '<span class="muted">?</span>';
+
+    const rows = r.sources.map((s, si) => {
+      const n = els(s).length;
+      const callChip = s.t.call
+        ? '<span class="chip ' + ({ 'Use existing platform data': 'chip-good', 'Expand existing feed': 'chip-good', 'Source from ADS': 'chip-good', 'Not a data source': 'chip-crit' }[s.t.call] || 'chip-team') + '">' + esc(s.t.call) + '</span>'
+        : (n ? '<span class="muted">Not set</span>' : '<span class="chip chip-warn">Needs element detail</span>');
+      return '<tr class="row-btn' + (unconf ? ' unconf' : '') + '" data-act="pick-src" data-r="' + ri + '" data-s="' + si + '" aria-selected="' + (si === pick) + '">' +
+        '<td><span class="chip chip-team mono">' + esc(s.t.reqId) + '</span><br><button type="button" class="btn btn-quiet src-btn" data-act="pick-src" data-r="' + ri + '" data-s="' + si + '"><b>' + esc(srcName(s)) + '</b></button><br><span class="muted small">' + esc(srcDesc(s)) + (s.appId ? ' · ' + esc(s.appId) : '') + '</span></td>' +
+        '<td>' + dash(s.priority) + '</td><td class="nowrap">' + dash(s.frequency) + '</td><td class="nowrap">' + dash(s.consumer) + '</td><td class="nowrap">' + dash(s.neededBy) + '</td>' +
+        '<td class="c-team num">' + (n ? n : '<span class="chip chip-crit">0</span>') + '</td>' +
+        '<td class="c-team">' + (s.t.held === 'Yes' ? '<span class="chip chip-good">&#10003; Yes</span>' : '<span class="chip">' + esc(s.t.held || 'Not set') + '</span>') + '</td>' +
+        '<td class="c-team nowrap">' + (esc(s.t.platform) || '<span class="muted">None</span>') + '</td>' +
+        '<td class="c-team num">' + (countTeams(s.t.others) || '<span class="muted">0</span>') + '</td>' +
+        '<td class="c-team">' + (esc(s.t.adsHas) || '<span class="muted">Not set</span>') + '</td>' +
+        '<td class="c-team">' + callChip + '</td>' +
+        '<td class="c-team nowrap">' + statusChip(s.t.status) + '</td></tr>';
+    }).join('');
+
+    return '<section class="detail" aria-label="Request detail"><div class="detail-head"><div>' +
+      '<p class="eyebrow">' + esc(r.id) + ' · ' + esc(r.team) + ' · received ' + esc(r.submitted) + (unconf ? ' by spreadsheet' : '') + (r.example ? ' · example' : '') + '</p>' +
+      '<h2>' + esc(r.title) + '</h2><div class="facts">' + facts + '</div>' + meter(r) + '</div></div>' +
+      requestSummary(r) +
+      '<div class="card"><h3>What they told us</h3><div class="told">' + kv('Initiative or tool', r.initiative) + kv('Supports', r.outcome) + kv('If delivered tomorrow', r.tomorrow) + kv('How they get it today', labelOf(TODAY, r.today)) + kv('Requested by', r.requester) + '</div></div>' +
+      '<div class="card"><div class="card-head"><h3>Suggested questions <span class="chip">' + q.length + '</span></h3>' + (q.length ? '<button type="button" class="btn" data-act="copy-q" data-r="' + ri + '">Copy list</button>' : '') + '</div>' +
+      '<p class="muted small">Built from the gaps in this request, to help you write each row\'s open questions. The list shortens as answers come in.</p>' + qList(q) + '</div>' +
+      '<div class="card-head"><h3>Source request: one row per source application</h3><div class="legend"><span><i class="sw sw-req"></i>Requester fills</span><span><i class="sw sw-team"></i>Data plane team fills</span>' +
+      (unconf ? '<span><i>Italic</i> was pre-populated from their original file and needs the requester to confirm</span>' : '') + '</div></div>' +
+      '<div class="scroll"><table class="pin"><thead><tr class="grp"><th class="c-req" colspan="5">Requester fills</th><th class="c-team" colspan="7">Data plane team fills</th></tr>' +
+      '<tr><th class="c-req">Request ID and source</th><th class="c-req">Priority</th><th class="c-req">Frequency</th><th class="c-req">Consumer</th><th class="c-req">Needed by</th>' +
+      '<th class="c-team num"># Fields listed</th><th class="c-team">Already in our platforms?</th><th class="c-team">Platform</th><th class="c-team num"># Other teams</th><th class="c-team">ADS exists?</th><th class="c-team">Recommended approach</th><th class="c-team">Status</th></tr></thead><tbody>' +
+      rows + '</tbody></table></div><p class="muted small">Select a row to fill in the data plane team\'s side.</p>' + (r.sources.length ? sourceDetail(r, ri, pick) : '') + '</section>';
+  }
+
+  function sourceDetail(r, ri, si) {
+    const s = r.sources[si], p = 'requests.' + ri + '.sources.' + si + '.', n = els(s).length, unconf = r.channel === 'spreadsheet', lk = lookup(s);
+    const kv = (k, v) => '<div class="kv"><span>' + esc(k) + '</span><b>' + (filled(v) ? esc(v) : '<span class="muted">Not answered</span>') + '</b></div>';
+    const ro = (k, html) => '<div class="kv"><span>' + esc(k) + '</span><b>' + html + '</b></div>';
+    const tf = (label, path, options) => '<div class="f"><label for="' + idOf(path) + '">' + esc(label) + '</label>' + cSelect(path, options, label) + '</div>';
+    const tt = (label, path, ph) => '<div class="f"><label for="' + idOf(path) + '">' + esc(label) + '</label><input class="cell-in" type="text" id="' + idOf(path) + '" data-bind="' + path + '" value="' + esc(get(path)) + '" placeholder="' + esc(ph) + '"></div>';
+    const elements = n
+      ? '<datalist id="gap-list">' + GAPS.map(g => '<option value="' + esc(g) + '"></option>').join('') + '</datalist>' +
+        '<div class="scroll"><table class="els"><thead><tr class="grp"><th class="c-req" colspan="2">Requester fills</th><th class="c-team" colspan="3">Data plane team fills</th></tr>' +
+        '<tr><th class="c-req">Business element</th><th class="c-req">System field or key they gave</th><th class="c-team">Four-part key: database, schema, table, element</th><th class="c-team">Already sourced? Gap or action</th><th class="c-team">Notes</th></tr></thead><tbody>' +
+        s.elements.slice(0, s.tAll ? n : PAGE).map((e, ei) => {
+          const ep = p + 'elements.' + ei + '.t.', k = keyCount(e), nm = elName(e), vague = (e.fieldType === 'summary' || e.fieldType === 'unsure') && !filled(e.key.element);
+          return '<tr' + (unconf ? ' class="unconf"' : '') + '><td><b>' + esc(nm) + '</b>' + (e.need ? ' <span class="chip' + (e.need === 'required' ? ' chip-req' : '') + '">' + labelOf(NEED, e.need) + '</span>' : '') + (vague ? ' <span class="chip chip-warn">' + esc(labelOf(FIELD_TYPES, e.fieldType)) + '</span>' : '') +
+            (filled(e.definition) ? '<br><span class="small">' + esc(e.definition) + '</span>' : '') + (e.why ? '<br><span class="muted small">Needed for: ' + esc(e.why) + '</span>' : '') +
+            (e.population ? '<br><span class="muted small">In scope: ' + esc(e.population) + '</span>' : '') + (e.example ? '<br><span class="muted small">Example: ' + esc(e.example) + '</span>' : '') + '</td>' +
+            '<td>' + (k ? '<span class="mono keytext">' + esc(keyText(e.key)) + '</span><br>' : '') + '<span class="chip ' + (k === 4 ? 'chip-good' : k ? 'chip-warn' : 'chip-crit') + '">' + (k === 4 ? '&#10003; Full key' : k ? k + ' of 4 parts' : 'Not known') + '</span></td>' +
+            '<td class="c-team"><div class="key4-in">' + cText(ep + 'db', 'Database for ' + nm, 'database') + cText(ep + 'schema', 'Schema for ' + nm, 'schema') + cText(ep + 'table', 'Table for ' + nm, 'table') + cText(ep + 'element', 'Element for ' + nm, 'element') + '</div></td>' +
+            '<td class="c-team"><div class="stack">' + cSelect(ep + 'sourced', SOURCED, 'Already sourced: ' + nm) +
+            '<input class="cell-in" type="text" list="gap-list" id="' + idOf(ep + 'gap') + '" data-bind="' + ep + 'gap" value="' + esc(e.t.gap) + '" placeholder="Gap or action" aria-label="Gap or action for ' + esc(nm) + '"></div></td>' +
+            '<td class="c-team"><textarea class="cell-in" rows="2" id="' + idOf(ep + 'notes') + '" data-bind="' + ep + 'notes" aria-label="Notes for ' + esc(nm) + '">' + esc(e.t.notes) + '</textarea></td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        (n > PAGE ? '<div class="btn-row"><span class="muted small">Showing ' + (s.tAll ? n : PAGE) + ' of ' + n + '.</span><button type="button" class="btn btn-quiet" data-act="team-show-all" data-r="' + ri + '" data-s="' + si + '">' + (s.tAll ? 'Show the first ' + PAGE : 'Show all ' + n) + '</button></div>' : '')
+      : '<p class="note note-crit"><b>No fields listed.</b> ' + (filled(s.describe) ? 'They described the need as: &ldquo;' + esc(s.describe) + '&rdquo;' : 'We need element-level detail. Only the source name, priority and yes or no flags were given.') + '</p>';
+    return '<div class="card" id="src-detail"><div class="card-head"><h3><span class="chip chip-team mono">' + esc(s.t.reqId) + '</span> ' + esc(srcName(s)) + ' <span class="muted small">' + esc(srcDesc(s)) + '</span></h3><span class="muted small">Source ' + (si + 1) + ' of ' + r.sources.length + '</span></div>' +
+      '<div class="panes"><div class="pane pane-req' + (unconf ? ' unconf' : '') + '"><p class="eyebrow">Requester filled in</p><div class="told">' +
+      kv('Business use case', s.useCase) + kv('Data category', s.categories.join(', ')) + kv('Application ID', s.appId) + kv('Priority', s.priority) + kv('Priority rationale', s.priorityWhy) +
+      kv('Frequency', s.frequency) + kv('Data type', labelOf(DATA_TYPES, s.dataType)) + kv('Data consumer', s.consumer) + kv('Needed by', s.neededBy) +
+      kv('Regulatory driven?', labelOf(YESNOUNK, s.regulatory)) + (s.regulatory === 'yes' ? kv('Regulation or requirement', [s.regType, s.regDetail].filter(filled).join(': ')) : '') +
+      kv('Report distribution?', labelOf(YESNO, s.reporting)) + (s.reporting === 'yes' ? kv('Report audience', s.audience.join(', ')) : '') +
+      kv('Historical data needed?', labelOf(YESNO, s.history)) + (s.history === 'yes' ? kv('History depth', s.historyDepth) : '') +
+      kv('Why this source', labelOf(GOLDEN, s.golden)) + kv('Kind of source', labelOf(KINDS, s.kind)) +
+      kv('Who knows it best', s.sme) + kv('Samples or screenshots', labelOf(YESNO, s.samples)) + (s.files.length ? kv('Element files uploaded', s.files.map(f => f.name + ' (' + f.count + ')').join(', ')) : '') + '</div></div>' +
+      '<div class="pane pane-team"><p class="eyebrow">Data plane team fills</p><div class="grid2">' +
+      ro('# Fields listed', n ? String(n) : '0 <span class="muted small">We need element-level detail</span>') +
+      tf('Already in our platforms?', p + 't.held', ADS_HAS) +
+      tt('Platform', p + 't.platform', 'Which platform holds it') +
+      '<div class="f"><label for="' + idOf(p + 't.others') + '">Other risk teams requesting</label><input class="cell-in" type="text" id="' + idOf(p + 't.others') + '" data-bind="' + p + 't.others" value="' + esc(s.t.others) + '" placeholder="Separate names with semicolons">' +
+      '<p class="hint"># Other teams: <b id="' + idOf(p + 't.others') + '-n">' + countTeams(s.t.others) + '</b></p></div>' +
+      tf('Approved ADS exists?', p + 't.adsHas', ADS_HAS) + tt('ADS name', p + 't.adsName', 'None identified') + tt('ADS onboard date', p + 't.adsDate', 'For example 2029-Q1') +
+      tf('Recommended data sourcing approach', p + 't.call', CALL) + tf('Status', p + 't.status', STATUS) +
+      '<div class="f f-wide"><label for="' + idOf(p + 't.next') + '">Open questions or next step</label><textarea class="cell-in" rows="4" id="' + idOf(p + 't.next') + '" data-bind="' + p + 't.next" placeholder="What you need from the requester, or what happens next">' + esc(s.t.next) + '</textarea>' +
+      '<div class="btn-row"><button type="button" class="btn btn-quiet" data-act="draft-next" data-r="' + ri + '" data-s="' + si + '">Draft from the gaps in this row</button><span class="hint">The requester sees this under Submitted requests.</span></div></div>' +
+      '<div class="kv f-wide"><span>Validation lookup</span><b><span class="chip ' + lk.cls + '">' + esc(lk.text) + '</span></b><span>Checks the application ID against our platform details.</span></div>' +
+      '</div><div class="sub"><p class="eyebrow">Also tracked</p><div class="grid2">' + tf('Is it the right source?', p + 't.check', CHECK) + tf('Team priority', p + 't.pri', TEAM_PRI) + tf('Target', p + 't.target', TARGET) + '</div>' +
+      '<p class="muted small">' + (s.t.by ? 'Last updated by ' + esc(s.t.by) + ' on ' + esc(s.t.at) + '.' : 'No one on the data plane team has updated this row yet.') + '</p></div></div></div>' +
+      '<h3>PDE requirements for ' + esc(s.t.reqId) + ': one row per data element</h3>' + elements + '</div>';
+  }
+
+  function triageGuide() {
+    const li = (label, text) => '<li><b>' + label + '</b> ' + text + '</li>';
+    return '<details class="guide" data-open="guideOpen"' + (state.guideOpen ? ' open' : '') + '><summary><b>Triage guide</b><span class="chip chip-team">Data plane team only</span><span class="muted small">How to work each request and which approach to recommend.</span></summary><div class="guide-body">' +
+      '<div><h3>Phase 1: source request</h3><ol>' +
+      li('Assign a request ID', 'to each source row, in the form TEAM-###. It links the source row to its PDE rows.') +
+      li('Run the validation lookup.', 'Check the application ID against our platform details, then set Already in our platforms and name the platform.') +
+      li('Is it a data source at all?', 'If it is a dashboard or a use case, recommend Not a data source and ask which system feeds it.') +
+      li('Already in our platforms?', 'If every field they need is there, recommend Use existing platform data. If the source is there but fields are missing, recommend Expand existing feed.') +
+      li('Who else is asking?', 'List the other risk teams requesting the same source. More teams means more value from sourcing it once.') +
+      li('Is there an approved data source?', 'Record whether one exists, its name and its onboard date. If it is live, recommend Source from ADS. If it is not onboarded yet, recommend Interim SOR and weigh sourcing now against waiting.') +
+      li('Not held anywhere?', 'Recommend Net new.') +
+      li('Set the status and the next step.', 'If fields listed is zero we need element-level detail. Write the open questions so the requester knows exactly what is missing.') +
+      '</ol></div><div><h3>Phase 2: PDE requirements</h3><ol>' +
+      li('Match each element', 'against what we hold. Where it is found, record the database, schema, table and element, set Already sourced to Yes and the gap to None.') +
+      li('Not found?', 'Set the gap or action to ask for a screenshot from the system or a system extract, so we can identify the element.') +
+      li('Source is not an application?', 'Set the gap or action to ask where they pull the element from today.') +
+      li('Not in our platforms?', 'Set Already sourced to No and take it to the source or ADS team to confirm it is available.') +
+      li('Suggest more.', 'If they listed a few fields and we hold many, share the full list. They may need more than they asked for.') +
+      '</ol></div></div></details>';
+  }
+  function viewTriage() {
+    const ri = Math.max(0, state.requests.findIndex(r => r.id === state.picked)), cur = state.requests[ri];
+    return '<div class="view-head"><p class="eyebrow">For the data plane team</p><h1>Triage queue</h1><p>After a requesting team sends its request, we fill in our side for each source: do we already hold it, who else is asking, is there an approved data source, what we recommend, and what we still need from them.</p></div>' + triageGuide() +
+      '<div class="scroll"><table><thead><tr><th>Submission</th><th>Request</th><th>Requesting team</th><th class="num">Sources</th><th class="num">Elements</th><th>Answers given</th><th>Status</th></tr></thead><tbody>' +
+      state.requests.map(r => { const s = score(r); return '<tr class="row-btn" data-act="pick" data-id="' + esc(r.id) + '" aria-selected="' + (r === cur) + '"><td><button type="button" class="btn btn-quiet mono" data-act="pick" data-id="' + esc(r.id) + '">' + esc(r.id) + '</button></td>' +
+        '<td><b>' + esc(r.title) + '</b><br><span class="muted small">' + esc(r.initiative) + '</span></td><td>' + esc(r.team) + '</td><td class="num">' + r.sources.length + '</td><td class="num">' + elCount(r) + '</td>' +
+        '<td><div class="meter"><span class="meter-track"><span class="meter-fill" style="display:block;width:' + Math.round(100 * s.ok / s.total) + '%"></span></span><b>' + Math.round(100 * s.ok / s.total) + '%</b></div></td><td><div class="facts">' + rollup(r) + '</div></td></tr>'; }).join('') +
+      '</tbody></table></div>' + triageDetail(cur, ri);
+  }
+
+  /* ================= view: demand by source ================= */
+  function demandRows() {
+    const map = new Map();
+    state.requests.forEach(r => r.sources.forEach(s => {
+      const k = srcKey(s);
+      if (!map.has(k)) map.set(k, { name: srcName(s), desc: srcDesc(s), c: cat(s.catalog), report: false, teams: new Set(), requests: 0, elements: 0, blank: 0 });
+      const d = map.get(k);
+      d.teams.add(r.team); d.requests++; d.elements += els(s).length; if (!els(s).length) d.blank++; if (isReport(s)) d.report = true;
+    }));
+    return [...map.values()].sort((a, b) => b.teams.size - a.teams.size || b.requests - a.requests || a.name.localeCompare(b.name));
+  }
+  function viewDemand() {
+    const rows = demandRows(), max = Math.max(1, ...rows.map(r => r.teams.size));
+    const held = rows.filter(r => r.c && r.c.platforms.length).length;
+    const stat = (n, label) => '<div class="stat"><b>' + n + '</b><span>' + label + '</span></div>';
+    const next = r => r.report ? 'Find the system behind the report'
+      : r.c && r.c.platforms.length ? 'Share the fields we hold and confirm fit'
+      : !r.elements ? 'Ask requesters for the fields'
+      : 'Size a new feed';
+    return '<div class="view-head"><p class="eyebrow">For the data plane team</p><h1>Demand by source</h1><p>Every open request rolled up by source. Sources that several risk areas ask for are the ones to source once, for everyone.</p></div>' +
+      '<div class="stats">' + stat(state.requests.length, 'requests in the queue') + stat(rows.length, 'sources requested') + stat(rows.filter(r => r.teams.size > 1).length, 'asked for by two or more risk areas') +
+      stat(held, 'already in our platforms') + stat(rows.filter(r => !r.elements).length, 'with no data elements listed') + '</div>' +
+      '<div class="scroll"><table><thead><tr><th>Source</th><th>Risk areas asking</th><th class="num">Requests</th><th class="num">Elements listed</th><th>In our platforms</th><th>Approved data source</th><th>Next step</th></tr></thead><tbody>' +
+      rows.map(r => '<tr><td><b>' + esc(r.name) + '</b><br><span class="muted small">' + esc(r.desc) + '</span></td>' +
+        '<td><div class="demand-bar"><i style="width:' + Math.round(90 * r.teams.size / max) + 'px"></i><b>' + r.teams.size + '</b></div><span class="muted small">' + esc([...r.teams].join(', ')) + '</span></td>' +
+        '<td class="num">' + r.requests + '</td><td class="num">' + (r.elements || '<span class="chip chip-crit">None</span>') + (r.elements && r.blank ? '<br><span class="muted small nowrap">' + r.blank + ' of ' + r.requests + ' requests list none</span>' : '') + '</td>' +
+        '<td>' + (r.c && r.c.platforms.length ? '<span class="chip chip-good">&#10003; ' + esc(r.c.platforms.join(', ')) + '</span>' : '<span class="chip">Not yet</span>') + '</td>' +
+        '<td class="small">' + esc(r.c ? adsLabel(r.c) : 'Unknown') + '</td><td class="small">' + next(r) + '</td></tr>').join('') +
+      '</tbody></table></div><p class="muted small">Counts come from the requests in the triage queue, so sending a new request changes this view.</p>';
+  }
+
+  /* ================= view: how to use ================= */
+  const WGL = [
+    ['Source', 'Source A', 'Source A customer master: customer name, customer ID, customer type and open date, for all active retail customers', 'Lets us confirm the authoritative source and whether we already receive these fields'],
+    ['Fields', 'Customer name (sources: Source A, Source B, Source C)', 'Customer legal name from the authoritative customer source. We need one authoritative value per customer', 'Listing every system that holds a field hides which one is authoritative'],
+    ['Stakeholders', 'Stakeholders', 'Accountable executive and risk lead roles only', '"All stakeholders" could mean dozens of named roles we would source for no reason'],
+    ['Dates', 'Go-live dates', 'Planned production go-live date. Please confirm whether the application registry or the project tool is the system of record', 'The same date can live in several systems with different values'],
+    ['Priority', 'High', 'High: required for the monthly risk committee pack starting Q1 2027', 'A rationale lets us compare priorities across teams'],
+    ['Regulatory', 'Yes', 'Yes: supports [cite regulation, policy or exam finding]', 'We need to tell regulatory requirements apart from "important"'],
+    ['Reporting distribution', 'Yes', 'Yes: monthly risk committee and executive risk dashboard', 'Audience drives controls, timeliness and quality expectations'],
+    ['Historical data', 'Yes', 'Yes: 24 months back, monthly snapshots', 'Drives backfill effort and storage'],
+    ['Use or consumer', 'For the AI tool', 'Loaded monthly into the AI tool to answer [specific question]; reviewed by [oversight owner]', 'Confirms the consumer is ready to use the data once it is sourced']
+  ];
+  function viewHowto() {
+    const step = (who, cls, title, text) => '<li><div class="chev ' + cls + '"><span>' + title + '</span><small>' + who + '</small></div><p>' + text + '</p></li>';
+    return '<div class="view-head"><p class="eyebrow">Start here</p><h1>How to use this form</h1><p>A request has two phases that you fill in. The data plane team then reviews it and walks you through what we found.</p></div>' +
+      '<ol class="flow">' +
+      step('You', 'you', 'Source request', 'One entry per source application: its priority and rationale, business use case, frequency, data type, history and who consumes it.') +
+      step('You', 'you', 'PDE requirements', 'List the data elements for each source. For more than a handful, download the Excel template, fill in one row per element, and upload it.') +
+      step('Data plane team', 'team', 'Review', 'We give each source a request ID, check it against what we already hold, look for an approved data source, and recommend a path.') +
+      step('Together', 'both', 'Walkthrough', 'We go through the request with you, share the fields we already hold, and call out anything that is missing.') +
+      step('Data plane team', 'team', 'Next steps', 'For data we do not hold yet, we work with the source or ADS team to confirm it is available and plan the sourcing.') +
+      '</ol>' +
+      '<div class="roles"><div class="role-req"><h3>Yellow: requester fills</h3><p>Anything shown in yellow is filled in by the requesting team.</p></div>' +
+      '<div class="role-team"><h3>Blue: data plane team fills</h3><p>Anything shown in blue is added or validated by the data plane team during review.</p></div></div>' +
+      '<section class="card"><h2>What good looks like</h2><p class="muted">Side-by-side examples of requests we cannot act on and requests we can. Share this with every requesting team.</p>' +
+      '<div class="scroll"><table class="wgl"><thead><tr><th>Topic</th><th>Not enough (what we often receive)</th><th>Actionable (what we need)</th><th>Why it matters</th></tr></thead><tbody>' +
+      WGL.map(w => '<tr><td><b>' + esc(w[0]) + '</b></td><td>' + esc(w[1]) + '</td><td>' + esc(w[2]) + '</td><td>' + esc(w[3]) + '</td></tr>').join('') +
+      '</tbody></table></div>' +
+      '<h3>And for each data element</h3>' + goodLooksLike() +
+      '<div class="btn-row"><button type="button" class="btn btn-primary" data-act="see-example">Open the worked example</button><button type="button" class="btn" data-act="start-blank">Start a blank request</button></div></section>' +
+      '<section class="card"><h2>Before you start</h2><ul class="tips"><li>You sign in with the company sign-in. Your name, email and team come from it, so you do not type them.</li><li>You can send a request with gaps. We will come back with specific questions.</li>' +
+      '<li>A table can hold hundreds of data elements. Use the Excel template on the PDE requirements step instead of typing them one by one.</li>' +
+      '<li>If a source is already in our platforms, the form shows the fields we hold so you can pick from them.</li>' +
+      '<li>If you cannot name a field, a screenshot from the system or a system extract helps us find it.</li>' +
+      '<li>The meaning of each question is on the Definitions tab.</li></ul></section>';
+  }
+
+  /* ================= view: definitions ================= */
+  /* field, tab, who fills it (req or team), definition, allowed values, open item */
+  const DEFS = [
+    ['Request ID', 'Both', 'team', 'Unique ID assigned by the data plane team to each source row. It links a source row to its PDE rows.', 'TEAM-###, for example OPR-001'],
+    ['Requesting team', 'Source request', 'req', 'The risk team asking for the data.', 'Team name'],
+    ['Initiative or tool', 'Source request', 'req', 'The programme, model, report or AI tool the data supports.', 'Free text'],
+    ['Source application', 'Both', 'req', 'The application the requester believes holds the data. The data plane team validates that it is the right source.', 'Application name as in the application inventory'],
+    ['Application ID', 'Source request', 'req', 'The application\'s ID in the inventory, if known.', 'APP-00000'],
+    ['Data category', 'Source request', 'req', 'Broad subject area of the data.', 'For example Customer, Account, Transaction, Issue or event, Change or initiative'],
+    ['Business use case', 'Source request', 'req', 'What decision, report or analysis the data enables. Specific enough that a reviewer understands why each element is needed.', 'Two to four sentences'],
+    ['Priority', 'Source request', 'req', 'Business priority to the requesting team.', 'High / Medium / Low', 'Scale to be aligned across risk'],
+    ['Priority rationale', 'Source request', 'req', 'Why it has that priority. A rationale lets us compare priorities across teams.', 'Free text'],
+    ['Regulatory driven?', 'Source request', 'req', 'Yes only if required by a regulation, regulatory commitment, exam finding or policy mandate. Cite it.', 'Yes / No / Unknown', 'Definition to be confirmed with the business'],
+    ['Frequency', 'Source request', 'req', 'How often refreshed data is needed.', 'Daily / Weekly / Monthly / Quarterly / Annual / Ad hoc'],
+    ['Data type', 'Source request', 'req', 'A point-in-time snapshot, or every transaction or event.', 'Snapshot / Transactional / Both'],
+    ['History depth', 'Source request', 'req', 'How far back data is needed, when historical data is needed.', 'For example 13 months, 24 months, 7 years'],
+    ['Report distribution?', 'Source request', 'req', 'The data feeds a report or dashboard distributed beyond the requesting team.', 'Yes / No, and name the audience'],
+    ['Data consumer', 'Source request', 'req', 'What will consume the data.', 'Report / Dashboard / Model / AI tool / Analytics / Other'],
+    ['Needed by', 'Source request', 'req', 'The date the data is needed.', 'Date'],
+    ['Why this source', 'Source request', 'req', 'Whether the application is the authoritative source for the data, or simply where the requester sees it today.', 'Authoritative / Where we see it today / Not sure'],
+    ['# Fields listed', 'Source request', 'team', 'Count of PDE rows for this request ID. Zero means we need element-level detail.', 'Calculated'],
+    ['Already in our platforms?', 'Source request', 'team', 'The source is already brought into our platforms for another use.', 'Yes / No / Unknown'],
+    ['Platform', 'Source request', 'team', 'Which of our platforms already holds the source.', 'Platform name'],
+    ['Other risk teams requesting', 'Source request', 'team', 'Other risk teams that have asked for the same source.', 'Team names separated by semicolons'],
+    ['# Other teams', 'Source request', 'team', 'Count of the teams listed in Other risk teams requesting.', 'Calculated'],
+    ['Approved ADS exists?', 'Source request', 'team', 'Whether there is an approved, controlled data set (ADS) for this domain. Preferred over going direct to the system of record (SOR).', 'Yes / No / Unknown'],
+    ['ADS name', 'Source request', 'team', 'Name of the approved data source.', 'Free text'],
+    ['ADS onboard date', 'Source request', 'team', 'When the approved data source is, or will be, onboarded.', 'For example Live, or 2029-Q1'],
+    ['Recommended data sourcing approach', 'Source request', 'team', 'The data plane team\'s recommended route to fulfil the request.', 'Use existing platform data / Expand existing feed / Source from ADS / Interim SOR / Net new / Not a data source'],
+    ['Status', 'Source request', 'team', 'Where the data plane team is with this source row.', 'Not started / In review / Questions sent / Ready to source / Parked'],
+    ['Open questions or next step', 'Source request', 'team', 'What the data plane team needs from the requester, or what happens next.', 'Free text'],
+    ['Validation lookup', 'Source request', 'team', 'Checks the application ID against our platform details.', 'In our platforms / Not in our platforms'],
+    ['Business element name', 'PDE requirements', 'req', 'Business term for the data element, in the requester\'s words. Required even if the system field name is unknown.', 'Free text'],
+    ['Business definition', 'PDE requirements', 'req', 'What the element means in business terms.', 'Free text'],
+    ['Why needed / how used', 'PDE requirements', 'req', 'What the element is used for in the use case.', 'Free text'],
+    ['Population or filters', 'PDE requirements', 'req', 'Which records are in scope.', 'For example active retail customers; open initiatives'],
+    ['Example values', 'PDE requirements', 'req', 'One or two sample values, to help us recognise the field.', 'Free text'],
+    ['Required or nice-to-have', 'PDE requirements', 'req', 'Whether the use case cannot work without the element.', 'Required / Nice-to-have'],
+    ['System field name (if known)', 'PDE requirements', 'req', 'The field\'s name in the source system. Requesters can also give the database, schema or table if they know them. Even two parts of the key help.', 'Free text'],
+    ['One field or a summary', 'PDE requirements', 'req', 'A field is a single stored value. A summary stands for several fields and has to be broken out before we can source it.', 'One field / Summary of several / Not sure'],
+    ['Four-part key', 'PDE requirements', 'team', 'Physical location of the element, completed and confirmed by the data plane team.', 'Database / Schema / Table / Element (the column)'],
+    ['Already sourced?', 'PDE requirements', 'team', 'Whether the element is already in our platforms.', 'Yes / No / Unknown'],
+    ['Gap or action', 'PDE requirements', 'team', 'What is missing for this element and what happens next.', 'For example: None; already sourced'],
+    ['Notes', 'PDE requirements', 'team', 'Anything else the data plane team wants to record.', 'Free text']
+  ];
+  function viewDefinitions() {
+    return '<div class="view-head"><p class="eyebrow">Shared reference</p><h1>Definitions</h1><p>Shared meaning for every field. Open items marked TBC need agreement across risk teams.</p></div>' +
+      '<div class="legend"><span><i class="sw sw-req"></i>Requester fills</span><span><i class="sw sw-team"></i>Data plane team fills</span></div>' +
+      '<div class="scroll"><table class="deftab"><thead><tr><th>Field</th><th>Tab</th><th>Definition</th><th>Allowed values or format</th></tr></thead><tbody>' +
+      DEFS.map(d => '<tr><td class="' + (d[2] === 'team' ? 'c-team' : 'c-reqcell') + '"><b>' + esc(d[0]) + '</b></td><td class="nowrap">' + esc(d[1]) + '</td><td>' + esc(d[3]) + (d[5] ? '<br><span class="chip chip-warn">TBC</span> <span class="muted small">' + esc(d[5]) + '</span>' : '') + '</td><td class="small">' + esc(d[4]) + '</td></tr>').join('') +
+      '</tbody></table></div>';
+  }
+
+  /* ================= reading uploaded spreadsheets ================= */
+  /* A small .xlsx reader so the page has no outside dependency: unzip, then read the first sheet. */
+  async function inflateRaw(bytes) {
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  function unzip(buf) {
+    const u8 = new Uint8Array(buf), dv = new DataView(buf), td = new TextDecoder(), files = {};
+    let e = u8.length - 22;
+    while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+    if (e < 0) throw new Error('not a zip file');
+    const count = dv.getUint16(e + 10, true);
+    let pos = dv.getUint32(e + 16, true);
+    for (let i = 0; i < count && dv.getUint32(pos, true) === 0x02014b50; i++) {
+      const nlen = dv.getUint16(pos + 28, true), xlen = dv.getUint16(pos + 30, true), clen = dv.getUint16(pos + 32, true);
+      files[td.decode(u8.subarray(pos + 46, pos + 46 + nlen))] = { method: dv.getUint16(pos + 10, true), size: dv.getUint32(pos + 20, true), off: dv.getUint32(pos + 42, true) };
+      pos += 46 + nlen + xlen + clen;
+    }
+    return {
+      has: name => name in files,
+      async text(name) {
+        const f = files[name];
+        if (!f) return '';
+        const start = f.off + 30 + dv.getUint16(f.off + 26, true) + dv.getUint16(f.off + 28, true), data = u8.subarray(start, start + f.size);
+        return td.decode(f.method === 0 ? data : await inflateRaw(data));
+      }
+    };
+  }
+  async function readXlsx(buf) {
+    const zip = unzip(buf);
+    const xml = text => new DOMParser().parseFromString(text, 'application/xml');
+    const tags = (node, name) => Array.from(node.getElementsByTagNameNS('*', name));
+    let path = 'xl/worksheets/sheet1.xml';
+    const sheet = tags(xml(await zip.text('xl/workbook.xml')), 'sheet')[0];
+    if (sheet) {
+      const rid = sheet.getAttribute('r:id') || sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+      const rel = tags(xml(await zip.text('xl/_rels/workbook.xml.rels')), 'Relationship').find(r => r.getAttribute('Id') === rid);
+      if (rel) { const target = rel.getAttribute('Target'); path = target.charAt(0) === '/' ? target.slice(1) : 'xl/' + target; }
+    }
+    if (!zip.has(path)) throw new Error('no worksheet found');
+    const shared = zip.has('xl/sharedStrings.xml')
+      ? tags(xml(await zip.text('xl/sharedStrings.xml')), 'si').map(si => tags(si, 't').filter(t => t.parentNode.localName !== 'rPh').map(t => t.textContent).join(''))
+      : [];
+    const colOf = ref => { let n = 0; for (const ch of ref.replace(/[^A-Za-z]/g, '').toUpperCase()) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
+    return tags(xml(await zip.text(path)), 'row').map(r => {
+      const row = [];
+      let ci = 0;
+      tags(r, 'c').forEach(c => {
+        const ref = c.getAttribute('r'), type = c.getAttribute('t'), v = tags(c, 'v')[0];
+        if (ref) ci = colOf(ref);
+        row[ci++] = type === 's' ? (shared[Number(v && v.textContent)] || '') : type === 'inlineStr' ? tags(c, 't').map(t => t.textContent).join('') : (v ? v.textContent : '');
+      });
+      return Array.from(row, x => (x == null ? '' : String(x)));
+    });
+  }
+  function parseCsv(text) {
+    text = text.replace(/^﻿/, '');
+    const first = text.split(/\r?\n/, 1)[0];
+    const d = [',', '\t', ';'].sort((a, b) => first.split(b).length - first.split(a).length)[0];
+    const rows = [];
+    let row = [], cur = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === d) { row.push(cur); cur = ''; }
+      else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += ch;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows;
+  }
+  const HEADERS = {
+    source: ['sourceapplication', 'source', 'application', 'sourceapp', 'sourcesystem', 'applicationname'],
+    db: ['database', 'db', 'databasename', 'dbname', 'databaseifknown'],
+    schema: ['schema', 'schemaname', 'schemaifknown'],
+    table: ['table', 'tablename', 'view', 'tableorview', 'tableifknown'],
+    element: ['element', 'elementname', 'column', 'columnname', 'field', 'fieldname', 'attribute', 'physicalname', 'systemfieldname', 'systemfieldnameifknown', 'systemfield'],
+    name: ['dataelement', 'dataelementname', 'businesselement', 'businesselementname', 'businessname', 'name', 'businessterm', 'pde'],
+    definition: ['definition', 'description', 'whatitmeans', 'meaning', 'businessdefinition'],
+    why: ['why', 'whyyouneedit', 'whyneeded', 'whyneededhowused', 'howused', 'purpose', 'reason', 'use', 'usage'],
+    example: ['examplevalues', 'examplevalue', 'example', 'examples', 'samplevalues'],
+    need: ['requiredornicetohave', 'requirednicetohave', 'required', 'requiredoroptional'],
+    population: ['population', 'populationfilters', 'populationorfilters', 'filters', 'filter', 'scope'],
+    fq: ['fourpartkey', '4partkey', 'key', 'fullyqualifiedname', 'fqn']
+  };
+  function rowsToElements(rows) {
+    const normal = v => String(v == null ? '' : v).toLowerCase().replace(/[^a-z0-9]/g, '');
+    let head = -1, map = null;
+    for (let r = 0; r < Math.min(rows.length, 15) && head < 0; r++) {
+      const m = {};
+      rows[r].forEach((cell, c) => { const h = normal(cell); for (const k in HEADERS) if (!(k in m) && HEADERS[k].includes(h)) { m[k] = c; break; } });
+      const hits = Object.keys(m).length, cells = rows[r].filter(x => normal(x)).length;
+      if (hits >= 2 || (hits === 1 && cells === 1)) { head = r; map = m; }
+    }
+    if (head < 0) return null;
+    const out = [];
+    for (let r = head + 1; r < rows.length && out.length < 5000; r++) {
+      const cell = k => (k in map ? String(rows[r][map[k]] == null ? '' : rows[r][map[k]]).trim() : '');
+      if (/^example\b/i.test(cell('source'))) continue;
+      const key = { db: cell('db'), schema: cell('schema'), table: cell('table'), element: cell('element') };
+      const fq = cell('fq');
+      if (fq && !KEY_PARTS.some(([k]) => key[k])) {
+        const parts = fq.split('.').map(x => x.trim()).slice(-4);
+        KEY_PARTS.slice(4 - parts.length).forEach(([k], n) => { key[k] = parts[n]; });
+      }
+      const nv = cell('need');
+      const e = { source: cell('source'), name: cell('name'), definition: cell('definition'), why: cell('why'), population: cell('population'), example: cell('example'), need: /nice|optional/i.test(nv) ? 'nice' : /req|must|yes|mandatory/i.test(nv) ? 'required' : '', key, fieldType: key.element ? 'field' : '' };
+      if (e.name || KEY_PARTS.some(([k]) => key[k])) out.push(e);
+    }
+    return out;
+  }
+  async function importAll(file) {
+    const d = state.draft;
+    if (!file) return;
+    let found = null, problem = '';
+    try {
+      if (/\.xls$/i.test(file.name)) problem = 'Older .xls files cannot be read here. Save ' + file.name + ' as .xlsx and upload it again.';
+      else {
+        const rows = /\.xls[xm]$/i.test(file.name) ? await readXlsx(await file.arrayBuffer()) : parseCsv(await file.text());
+        found = rowsToElements(rows);
+        if (!found) problem = 'We could not find the header row in ' + file.name + '. Download the template and keep its column names.';
+        else if (!found.length) problem = 'We found the header row in ' + file.name + ' but no filled rows under it. Rows start below the example row.';
+      }
+    } catch (err) {
+      problem = file.name + ' could not be read. Save it as .xlsx and upload it again.';
+    }
+    if (!problem) {
+      const norm = v => String(v || '').trim().toLowerCase().replace(/[",]/g, ' ').replace(/\s+/g, ' ');
+      const index = new Map(), buckets = d.sources.map(() => []), unmatched = new Map();
+      d.sources.forEach((s, i) => { if (!index.has(norm(srcName(s)))) index.set(norm(srcName(s)), i); });
+      let noName = 0;
+      found.forEach(e => {
+        const key = norm(e.source), i = index.has(key) ? index.get(key) : (!key && d.sources.length === 1 ? 0 : -1);
+        if (i < 0) { const label = e.source.trim() || '(blank)'; unmatched.set(label, (unmatched.get(label) || 0) + 1); return; }
+        if (!filled(e.name)) noName++;
+        buckets[i].push(e);
+      });
+      const loaded = buckets.reduce((n, b) => n + b.length, 0);
+      if (!loaded) problem = 'None of the rows in ' + file.name + ' name a source in this request. The Source Application column must match one of: ' + d.sources.map(srcName).join(', ') + '.';
+      else {
+        d.sources.forEach((s, i) => {
+          s.elements = s.elements.filter(e => e.from !== 'upload' && (filled(e.name) || keyCount(e) > 0 || filled(e.definition))).concat(buckets[i].map(e => newElement(Object.assign(e, { from: 'upload' }))));
+          s.files = buckets[i].length ? [{ name: file.name, count: buckets[i].length }] : [];
+          if (buckets[i].length) s.unknownFields = false;
+          s.editing = -1; s.showAll = false;
+        });
+        d.pdeUpload = { name: file.name, loaded, perSource: d.sources.map((s, i) => [srcName(s), buckets[i].length]), unmatched: [...unmatched], noName };
+        state.errors.clear();
+        toast(loaded + (loaded === 1 ? ' data element' : ' data elements') + ' loaded from ' + file.name);
+      }
+    }
+    d.pdeError = problem;
+    render();
+  }
+
+  /* ================= writing the Excel template ================= */
+  /* A small .xlsx writer: the workbook parts as XML, packed into an uncompressed zip. */
+  const TEMPLATE_COLS = [['Source Application', 26], ['Business Element Name', 30], ['Business Definition', 42], ['Why Needed / How Used', 36], ['Population / Filters', 28], ['Example Values', 22],
+    ['Required or Nice-to-have', 16], ['System Field Name (if known)', 24], ['Database (if known)', 20], ['Schema (if known)', 18], ['Table (if known)', 22]];
+  const TEMPLATE_ROWS = 1000;
+  const xmlEsc = v => String(v).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+  const colName = n => { let out = ''; for (n++; n; n = Math.floor((n - 1) / 26)) out = String.fromCharCode(65 + (n - 1) % 26) + out; return out; };
+  const crcTable = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = bytes => { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function zipStore(files) {
+    const enc = new TextEncoder(), parts = [], central = [];
+    let offset = 0;
+    files.forEach(f => {
+      const name = enc.encode(f[0]), data = enc.encode(f[1]), crc = crc32(data);
+      const head = new DataView(new ArrayBuffer(30));
+      head.setUint32(0, 0x04034b50, true); head.setUint16(4, 20, true); head.setUint16(6, 0x0800, true); head.setUint16(12, 0x21, true);
+      head.setUint32(14, crc, true); head.setUint32(18, data.length, true); head.setUint32(22, data.length, true); head.setUint16(26, name.length, true);
+      const cd = new DataView(new ArrayBuffer(46));
+      cd.setUint32(0, 0x02014b50, true); cd.setUint16(4, 20, true); cd.setUint16(6, 20, true); cd.setUint16(8, 0x0800, true); cd.setUint16(14, 0x21, true);
+      cd.setUint32(16, crc, true); cd.setUint32(20, data.length, true); cd.setUint32(24, data.length, true); cd.setUint16(28, name.length, true); cd.setUint32(42, offset, true);
+      parts.push(new Uint8Array(head.buffer), name, data);
+      central.push(new Uint8Array(cd.buffer), name);
+      offset += 30 + name.length + data.length;
+    });
+    const cdSize = central.reduce((n, x) => n + x.length, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  function buildTemplate(sources) {
+    const ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"', head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+    const cell = (c, r, v, st) => '<c r="' + colName(c) + r + '" s="' + st + '"' + (v === '' ? '/>' : ' t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(v) + '</t></is></c>');
+    const row = (r, cells, ht) => '<row r="' + r + '"' + (ht ? ' ht="' + ht + '" customHeight="1"' : '') + '>' + cells + '</row>';
+    const last = 5 + TEMPLATE_ROWS, names = sources.map(s => srcName(s).replace(/[",]/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean), list = names.join(',');
+    const example = ['EXAMPLE (this row is ignored)', 'Customer legal name', 'Registered legal name of the customer', 'Screening input for the monthly risk report', 'Active retail customers', 'Example Trading LLC', 'Required', 'legal_nm', 'platform1_db', 'cust', 'customer_master'];
+    let data = row(1, cell(0, 1, 'PDE Requirements (one row per data element)', 1), 24) +
+      row(2, cell(0, 2, 'Fill in one row per data element from row 6 down, then upload this file on the PDE requirements step. Business Element Name is required on every row, even if the system field name is unknown. Do not rename, reorder or delete the columns.', 2)) +
+      row(3, cell(0, 3, 'REQUESTER FILLS →', 6)) +
+      row(4, TEMPLATE_COLS.map((c, i) => cell(i, 4, c[0], 3)).join(''), 34) +
+      row(5, example.map((v, i) => cell(i, 5, v, 4)).join(''));
+    for (let r = 6; r <= last; r++) data += row(r, TEMPLATE_COLS.map((c, i) => cell(i, r, '', 5)).join(''));
+    const dv = [];
+    if (list && list.length <= 250) dv.push('<dataValidation type="list" allowBlank="1" showErrorMessage="1" errorTitle="Source Application" error="Pick one of the sources in your request." sqref="A6:A' + last + '"><formula1>"' + xmlEsc(list) + '"</formula1></dataValidation>');
+    dv.push('<dataValidation type="list" allowBlank="1" showErrorMessage="1" errorTitle="Required or Nice-to-have" error="Pick Required or Nice-to-have." sqref="G6:G' + last + '"><formula1>"Required,Nice-to-have"</formula1></dataValidation>');
+    const sheet1 = head + '<worksheet ' + ns + '><sheetViews><sheetView tabSelected="1" workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>' +
+      '<cols>' + TEMPLATE_COLS.map((c, i) => '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + c[1] + '" customWidth="1"/>').join('') + '</cols><sheetData>' + data + '</sheetData>' +
+      '<dataValidations count="' + dv.length + '">' + dv.join('') + '</dataValidations></worksheet>';
+    const help = ['How to fill this in', '1. Go to the PDE Requirements sheet.', '2. Fill in one row per data element, starting at row 6. The example row is ignored, so you can leave it or delete it.',
+      '3. Source Application must match a source in your request' + (names.length ? ': ' + names.join('; ') + '.' : '.'),
+      '4. Business Element Name is required on every row. Give the system field name, database, schema and table where you know them. Even two of the four help us find the element.',
+      '5. Required or Nice-to-have: pick Required if the use case cannot work without the element.',
+      '6. Save the file as .xlsx and upload it on the PDE requirements step. Uploading again replaces the rows from the last upload.'];
+    const sheet2 = head + '<worksheet ' + ns + '><sheetViews><sheetView workbookViewId="0"/></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols><col min="1" max="1" width="130" customWidth="1"/></cols><sheetData>' +
+      help.map((t, i) => row(i + 1, cell(0, i + 1, t, i ? 0 : 1))).join('') + '</sheetData></worksheet>';
+    const edge = '<color rgb="FFD0CECE"/>', side = k => '<' + k + ' style="thin">' + edge + '</' + k + '>';
+    const styles = head + '<styleSheet ' + ns + '><fonts count="5"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF1F3864"/><name val="Calibri"/></font>' +
+      '<font><i/><sz val="10"/><color rgb="FF595959"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="10"/><color rgb="FF3F3F3F"/><name val="Calibri"/></font></fonts>' +
+      '<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF9C6500"/><bgColor indexed="64"/></patternFill></fill>' +
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEDEDED"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+      '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border>' + side('left') + side('right') + side('top') + side('bottom') + '<diagonal/></border></borders>' +
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="7">' +
+      '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
+      '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+      '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+      '<xf numFmtId="0" fontId="3" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+      '<xf numFmtId="0" fontId="2" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
+      '<xf numFmtId="49" fontId="0" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
+      '<xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+      '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+    const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships', pkg = 'http://schemas.openxmlformats.org/package/2006/relationships', ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.';
+    return zipStore([
+      ['[Content_Types].xml', head + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+        '<Override PartName="/xl/workbook.xml" ContentType="' + ct + 'sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="' + ct + 'worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="' + ct + 'worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="' + ct + 'styles+xml"/></Types>'],
+      ['_rels/.rels', head + '<Relationships xmlns="' + pkg + '"><Relationship Id="rId1" Type="' + rel + '/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+      ['xl/workbook.xml', head + '<workbook ' + ns + ' xmlns:r="' + rel + '"><bookViews><workbookView xWindow="0" yWindow="0" windowWidth="28800" windowHeight="14400"/></bookViews><sheets><sheet name="PDE Requirements" sheetId="1" r:id="rId1"/><sheet name="How to fill this in" sheetId="2" r:id="rId2"/></sheets></workbook>'],
+      ['xl/_rels/workbook.xml.rels', head + '<Relationships xmlns="' + pkg + '"><Relationship Id="rId1" Type="' + rel + '/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="' + rel + '/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="' + rel + '/styles" Target="styles.xml"/></Relationships>'],
+      ['xl/worksheets/sheet1.xml', sheet1], ['xl/worksheets/sheet2.xml', sheet2], ['xl/styles.xml', styles]
+    ]);
+  }
+  /* Inside the Claude viewer a page cannot start a download itself; it asks through the downloads capability. A saved copy of the page uses a normal link. */
+  const framed = !!(window.claude && window.claude.use);
+  const downloadsReady = framed ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+  async function saveFile(filename, blob) {
+    const dl = await downloadsReady;
+    if (dl) {
+      try { await dl.save({ filename, data: blob }); toast('Template saved'); }
+      catch (err) { const code = err && err.code; toast(code === 'declined' ? 'Download cancelled' : code === 'rate_limited' ? 'A download prompt is already open' : 'This view cannot save files. Open the page in a browser to download the template.'); }
+      return;
+    }
+    const a = document.createElement('a'), url = URL.createObjectURL(blob);
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast(framed ? 'Download started. If nothing was saved, downloads are blocked in this view.' : 'Template downloaded');
+  }
+
+  /* ================= render and events ================= */  /* ================= render and events ================= */
+  const views = { request: viewRequest, mine: viewMine, howto: viewHowto, triage: viewTriage, demand: viewDemand, definitions: viewDefinitions };
+  function signedOutView() {
+    return '<section class="panel signin"><span class="avatar avatar-lg" aria-hidden="true">?</span><h1>You are signed out</h1>' +
+      '<p class="muted">This is where the company sign-in goes. In the real tool your identity, team and access come from the company authentication system before this page loads.</p>' +
+      '<button type="button" class="btn btn-primary" data-act="sign-in">Sign in with company single sign-on</button>' +
+      '<p class="muted small">Placeholder only. This mockup never asks for a username or password.</p></section>';
+  }
+  function renderUser() {
+    const u = me();
+    if (!state.signedIn) { userbox.innerHTML = '<span class="user-out">Not signed in</span>'; return; }
+    const row = x => '<button type="button" class="user-opt" data-user="' + x.id + '" aria-pressed="' + (x.id === u.id) + '"><span class="avatar" aria-hidden="true">' + esc(x.initials) + '</span><span><b>' + esc(x.name) + '</b><small>' + esc(x.team) + '</small></span></button>';
+    userbox.innerHTML = '<button type="button" class="user-chip" id="user-chip" data-user-act="toggle" aria-expanded="' + state.menuOpen + '" aria-controls="user-menu"><span class="avatar" aria-hidden="true">' + esc(u.initials) + '</span>' +
+      '<span class="user-id"><b>' + esc(u.name) + '</b><small>' + esc(u.team) + '</small></span><span class="caret" aria-hidden="true">▾</span></button>' +
+      (state.menuOpen ? '<div class="user-menu" id="user-menu" role="group" aria-label="Your profile"><div class="user-head"><span class="avatar avatar-lg" aria-hidden="true">' + esc(u.initials) + '</span><div><b>' + esc(u.name) + '</b><span class="muted small">' + esc(u.email) + '</span></div></div>' +
+        '<dl class="user-facts"><dt>Employee ID</dt><dd class="mono">' + esc(u.empId) + '</dd><dt>Team</dt><dd>' + esc(u.team) + '</dd><dt>Access</dt><dd>' + ROLE_NAME[u.role] + '</dd></dl>' +
+        '<p class="muted small">Placeholder profile. In the real tool this comes from the company sign-in and directory, and your access decides which view you get.</p>' +
+        '<p class="eyebrow">Demo: switch sample user</p><div class="user-list">' + USERS.map(row).join('') + '</div>' +
+        '<button type="button" class="btn" data-user-act="signout">Sign out</button></div>' : '');
+  }
+  function render(focusId) {
+    const a = document.activeElement, fid = focusId || (a && app.contains(a) ? a.id : '');
+    renderUser();
+    ['req', 'team'].forEach(k => { const b = document.getElementById('role-' + k); b.setAttribute('aria-pressed', String(state.signedIn && k === state.role)); b.disabled = !state.signedIn; });
+    document.getElementById('tabbar').dataset.role = state.role;
+    if (!state.signedIn) { app.innerHTML = signedOutView(); document.getElementById('tabs').innerHTML = ''; return; }
+    app.innerHTML = views[state.view]();
+    document.getElementById('tabs').innerHTML = ROLE_VIEWS[state.role].map(v => '<button class="tab" role="tab" id="tab-' + v[0] + '" data-view="' + v[0] + '" aria-selected="' + (v[0] === state.view) + '">' + v[1] +
+      (v[0] === 'triage' || v[0] === 'mine' ? '<span class="count">' + (v[0] === 'triage' ? state.requests.length : state.requests.filter(r => r.team === state.mineTeam).length) + '</span>' : '') + '</button>').join('');
+    if (fid) { const el = document.getElementById(fid); if (el) el.focus({ preventScroll: !focusId }); }
+  }
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+  function show(view) {
+    if (!ROLE_VIEWS[state.role].some(v => v[0] === view)) setRole(ROLE_VIEWS.req.some(v => v[0] === view) ? 'req' : 'team');
+    state.view = view; state.errors.clear();
+    try { history.replaceState(null, '', '#' + view); } catch (_) { /* hash is a convenience only */ }
+    render(); window.scrollTo(0, 0);
+  }
+  function goStep(n) {
+    state.step = n; state.errors.clear(); render('step-h'); window.scrollTo(0, 0);
+  }
+  function flag(items) {
+    state.errors = new Set(items.map(x => 'draft.' + x.path));
+    const first = items[0].path, row = /^sources\.(\d+)\.elements\.(\d+)\./.exec(first);
+    if (row) { const src = state.draft.sources[Number(row[1])]; src.editing = Number(row[2]); src.showAll = true; }
+    render();
+    const el = document.getElementById(idOf('draft.' + first)) || app.querySelector('.f-bad input, .f-bad select, .f-bad textarea, .err');
+    if (el) { el.scrollIntoView({ block: 'center' }); if (el.focus) el.focus({ preventScroll: true }); }
+    toast(items.length === 1 ? '1 answer is missing on this step' : items.length + ' answers are missing on this step');
+  }
+  function copyText(text, msg) {
+    const done = () => toast(msg || 'Questions copied');
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+      ta.remove();
+      if (ok) done(); else toast('Copy is blocked here. Select the list and copy it by hand.');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+  }
+
+  const actions = {
+    'go-step': t => goStep(Number(t.dataset.step)),
+    back: () => goStep(state.step - 1),
+    next: () => { const m = blocking(state.draft, state.step); if (m.length) flag(m); else goStep(state.step + 1); },
+    submit: () => {
+      const m = blocking(state.draft);
+      if (m.length) { state.step = Math.min(...m.map(x => x.step)); flag(m.filter(x => x.step === state.step)); return; }
+      const r = state.draft;
+      r.id = 'SUB-' + String(state.nextNum++).padStart(4, '0');
+      r.example = false; r.status = 'Not started'; r.submitted = new Date().toISOString().slice(0, 10);
+      r.sources.forEach(s => { s.t.call = ''; });
+      prepRequest(r);
+      state.requests.unshift(r); fillOthers(r); state.picked = r.id; state.submittedId = r.id; state.mineTeam = r.team;
+      state.draft = newRequest({ sources: [{}] }); state.step = 0; state.errors.clear();
+      render(); window.scrollTo(0, 0);
+    },
+    'add-source': () => { state.draft.sources.push(newSource()); state.errors.delete('draft.sources'); render(); },
+    'rm-source': t => { state.draft.sources.splice(Number(t.dataset.i), 1); state.errors.clear(); render(); },
+    'add-el': t => { const i = Number(t.dataset.i), s = state.draft.sources[i]; s.elements.push(newElement()); s.editing = s.elements.length - 1; s.showAll = true; state.errors.delete('draft.sources.' + i + '.elements'); render(idOf('draft.sources.' + i + '.elements.' + (s.elements.length - 1) + '.name')); },
+    'rm-el': t => { const s = state.draft.sources[Number(t.dataset.i)], j = Number(t.dataset.j); s.elements.splice(j, 1); s.editing = s.editing === j ? -1 : s.editing > j ? s.editing - 1 : s.editing; state.errors.clear(); render(); },
+    'edit-el': t => { const s = state.draft.sources[Number(t.dataset.i)], j = Number(t.dataset.j); s.editing = s.editing === j ? -1 : j; render('edit-' + t.dataset.i + '-' + j); },
+    'show-all': t => { const s = state.draft.sources[Number(t.dataset.i)]; s.showAll = !s.showAll; render(); },
+    'team-show-all': t => { const s = state.requests[Number(t.dataset.r)].sources[Number(t.dataset.s)]; s.tAll = !s.tAll; render(); },
+    'dl-template': () => saveFile('PDE-requirements-template.xlsx', buildTemplate(state.draft.sources)),
+    'clear-draft': () => { state.draft = newRequest({ sources: [{}] }); state.step = 0; state.errors.clear(); render(); toast('Form cleared'); },
+    'load-example': () => { state.draft = exampleDraft(); state.errors.clear(); render(); },
+    'open-triage': () => { state.submittedId = ''; show('triage'); },
+    'sign-in': () => { state.signedIn = true; render(); },
+    'see-mine': () => { state.submittedId = ''; show('mine'); },
+    'draft-next': t => {
+      const r = state.requests[Number(t.dataset.r)], s = r.sources[Number(t.dataset.s)], list = questions(r).filter(q => q.who === srcName(s));
+      s.t.next = list.length ? list.map(q => '- ' + q.text).join('\n') : 'No open questions. Ready for the next step.';
+      stamp('requests.' + t.dataset.r + '.sources.' + t.dataset.s + '.t.next');
+      render(idOf('requests.' + t.dataset.r + '.sources.' + t.dataset.s + '.t.next'));
+    },
+    'new-request': () => { state.submittedId = ''; render(); },
+    pick: t => { state.picked = t.dataset.id; render(); },
+    'pick-src': t => { state.requests[Number(t.dataset.r)].sel = Number(t.dataset.s); render(); },
+    'add-held': t => {
+      const i = Number(t.dataset.i), s = state.draft.sources[i], h = cat(s.catalog).held, col = h.cols[Number(t.dataset.n)];
+      s.elements = s.elements.filter(e => filled(e.name) || keyCount(e) > 0 || filled(e.definition));
+      s.elements.push(newElement({ name: col[1], fieldType: 'field', key: { db: h.db, schema: h.schema, table: h.table, element: col[0] } }));
+      s.heldOpen = true; state.errors.clear(); render();
+    },
+    'see-example': () => { state.draft = exampleDraft(); state.submittedId = ''; state.step = 0; show('request'); },
+    'start-blank': () => { state.draft = newRequest({ sources: [{}] }); state.submittedId = ''; state.step = 0; show('request'); },
+    'copy-q': t => { const r = state.requests[Number(t.dataset.r)]; copyText('Questions on ' + r.id + ' ' + r.title + '\n\n' + groupQ(questions(r)).map(g => g.who + '\n' + g.items.map(t => '- ' + t).join('\n')).join('\n\n')); }
+  };
+
+  app.addEventListener('click', e => {
+    const t = e.target.closest('[data-act]');
+    if (!t || !app.contains(t)) return;
+    actions[t.dataset.act](t);
+  });
+  app.addEventListener('input', e => {
+    const t = e.target, p = t.dataset.bind;
+    let p0 = '';
+    if (!p || t.type === 'checkbox' || t.type === 'radio' || t.tagName === 'SELECT') return;
+    set(p, t.value); stamp(p);
+    if (p.endsWith('.t.others')) { const n = document.getElementById(idOf(p) + '-n'); if (n) n.textContent = countTeams(t.value); }
+    let holder = t;
+    if (p.includes('.key.')) {
+      const ep = p.split('.key.')[0], chip = t.closest('.keyset').querySelector('.chip');
+      if (chip) chip.outerHTML = keyChip(get(ep));
+    }
+    if (state.errors.delete(p0 || p)) { const f = holder.closest('.f'); if (f) { f.classList.remove('f-bad'); const er = f.querySelector('.err'); if (er) er.remove(); } }
+  });
+  app.addEventListener('change', e => {
+    const t = e.target;
+    if (t.dataset.upload) { importAll(t.files[0]); return; }
+    if (t.dataset.bindset) {
+      const p = t.dataset.bindset, arr = get(p), i = arr.indexOf(t.value);
+      if (t.checked && i < 0) arr.push(t.value); else if (!t.checked && i >= 0) arr.splice(i, 1);
+      state.errors.delete(p); render(); return;
+    }
+    const p = t.dataset.bind;
+    if (!p) return;
+    if (t.type === 'checkbox') set(p, t.checked);
+    else if (t.type === 'radio' || t.tagName === 'SELECT') set(p, t.value);
+    else return;
+    stamp(p);
+    if (/^draft\.sources\.\d+\.catalog$/.test(p)) { const c = cat(t.value); get(p.replace(/\.catalog$/, '')).appId = c ? c.appId : ''; }
+    state.errors.delete(p); render();
+  });
+  app.addEventListener('toggle', e => { const p = e.target.dataset && e.target.dataset.open; if (p) set(p, e.target.open); }, true);
+  document.getElementById('tabs').addEventListener('click', e => { const t = e.target.closest('[data-view]'); if (t) show(t.dataset.view); });
+  document.querySelector('.role-sw').addEventListener('click', e => { const t = e.target.closest('[data-role]'); if (t && state.signedIn && t.dataset.role !== state.role) { setRole(t.dataset.role); show(ROLE_VIEWS[state.role][0][0]); } });
+  userbox.addEventListener('click', e => {
+    const opt = e.target.closest('[data-user]'), act = e.target.closest('[data-user-act]');
+    if (opt) { setUser(opt.dataset.user); state.menuOpen = false; state.submittedId = ''; show(ROLE_VIEWS[state.role][0][0]); document.getElementById('user-chip').focus(); }
+    else if (act && act.dataset.userAct === 'toggle') { state.menuOpen = !state.menuOpen; renderUser(); document.getElementById('user-chip').focus(); }
+    else if (act && act.dataset.userAct === 'signout') { state.signedIn = false; state.menuOpen = false; render(); window.scrollTo(0, 0); }
+  });
+  document.addEventListener('click', e => { if (state.menuOpen && !e.composedPath().includes(userbox)) { state.menuOpen = false; renderUser(); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.menuOpen) { state.menuOpen = false; renderUser(); document.getElementById('user-chip').focus(); } });
+
+  const start = (location.hash || '').slice(1);
+  if (VIEWS.includes(start)) { state.view = start; if (!ROLE_VIEWS.req.some(v => v[0] === start)) setRole('team'); }
+  render();
+})();
+</script>
+</body>
+</html>
